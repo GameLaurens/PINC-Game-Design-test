@@ -24,14 +24,20 @@ public final class World {
             && obstacles.stream().noneMatch(o -> o.overlaps(x, y, w, h));
     }
     public Canvas draw(boolean checker) {
+        return draw(checker, false);
+    }
+    public Canvas draw(boolean checker, boolean amber) {
         Canvas canvas = new Canvas(width, height);
         for (int y = 0; y < height; y++) for (int x = 0; x < width; x++) {
             boolean edge = x == 0 || y == 0 || x == width - 1 || y == height - 1;
             int ground = checker && (x / 4 + y / 2) % 2 == 0 ? 0x263d40 : 0x1b3035;
-            canvas.put(x, y, new Cell(edge ? '#' : ' ', edge ? 0x587d82 : ground, ground));
+            if (amber) ground = checker && (x / 4 + y / 2) % 2 == 0 ? 0x100b04 : 0x000000;
+            char wall = amber ? (x == 0 || x == width - 1 ? '│' : '─') : '#';
+            canvas.put(x, y, new Cell(edge ? wall : ' ', edge ? (amber ? PeditCharacter.AMBER : 0x587d82) : ground, ground));
         }
         for (Rect o : obstacles) for (int y = o.y; y < o.y + o.height; y++) for (int x = o.x; x < o.x + o.width; x++)
-            canvas.put(x, y, new Cell((x + y) % 2 == 0 ? '#' : '+', 0xd8b68a, 0x76573f));
+            canvas.put(x, y, amber ? new Cell((x + y) % 2 == 0 ? '▒' : '░', PeditCharacter.AMBER, 0x000000)
+                : new Cell((x + y) % 2 == 0 ? '#' : '+', 0xd8b68a, 0x76573f));
         return canvas;
     }
 }

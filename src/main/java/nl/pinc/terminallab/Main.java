@@ -9,7 +9,8 @@ public final class Main {
         "ASCII - eenvoudig", "ASCII - gedetailleerd", "Unicode - vormen en blokken",
         "ANSI True Color - gekleurd poppetje", "PNG - transparante terminalpixels",
         "ANSI - een pixel per voorgrondblok", "ANSI - een pixel per achtergrond",
-        "ANSI - twee verticale pixels per teken", "Vergelijk de drie ANSI-methodes"
+        "ANSI - twee verticale pixels per teken", "Vergelijk de drie ANSI-methodes",
+        "Pedit5-stijl - amber avonturier met zwaard en schild"
     };
     private static final int[] SIZES = {8, 16, 32};
     private final Sprite[] examples = new Sprite[3];
@@ -58,7 +59,7 @@ public final class Main {
     private static void help() {
         System.out.println("Terminal Sprite Lab | Java 17+ | ANSI + UTF-8");
         System.out.println("java --enable-native-access=ALL-UNNAMED -jar target/terminal-sprite-lab.jar [--png pad.png] [--size 8|16|32]");
-        System.out.println("1-9: demo | WASD: bewegen | +/-: formaat | B: achtergrond | P: animatie | R: positie | M/Esc: menu | Q: stop");
+        System.out.println("1-9: demo | 0: pedit5-stijl | WASD: bewegen | +/-: formaat | B: achtergrond | P: animatie | R: positie | M/Esc: menu | Q: stop");
     }
     private void run() throws IOException {
         try (TerminalSession session = new TerminalSession()) {
@@ -92,9 +93,9 @@ public final class Main {
     private Canvas menu(int width, int height) {
         Canvas c = new Canvas(width, height);
         c.text(2, 1, "TERMINAL SPRITE LAB", 0x71e6bb);
-        c.text(2, 2, "Negen speelbare demo's - geen grafisch venster");
-        for (int i = 0; i < MODES.length; i++) c.text(2, 4 + i, (i + 1) + "  " + MODES[i]);
-        c.text(2, 14, "Kies 1-9 direct, zonder Enter. Q sluit af.");
+        c.text(2, 2, "Tien speelbare demo's - geen grafisch venster");
+        for (int i = 0; i < MODES.length; i++) c.text(2, 4 + i, (i == 9 ? "0" : Integer.toString(i + 1)) + "  " + MODES[i]);
+        c.text(2, 14, "Kies 1-9 of 0 (pedit5), zonder Enter. Q sluit af.");
         c.text(2, 16, "WASD bewegen | +/- 8,16,32 px | B achtergrond");
         c.text(2, 17, "P animatie | R beginpositie | M/Esc menu | Q stop");
         c.text(2, 19, "PNG-bron: " + source);
@@ -111,6 +112,7 @@ public final class Main {
         };
     }
     private Sprite currentSprite() {
+        if (mode == 10) return PeditCharacter.create(SIZES[sizeIndex], 0);
         return custom != null && mode >= 5 ? custom.fit(SIZES[sizeIndex]) : examples[sizeIndex];
     }
     Canvas demo(int width, int height, long now, String stats) {
@@ -122,7 +124,7 @@ public final class Main {
         int sw = panelWidth - 1, sh = height - 8;
         int aw = art != null ? art.width() : sprite.width();
         int ah = art != null ? art.height() : mode == 9 ? sprite.height() : renderer().rows(sprite);
-        c.text(2, 0, mode + "  " + MODES[mode - 1], 0x71e6bb);
+        c.text(2, 0, (mode == 10 ? 0 : mode) + "  " + MODES[mode - 1], mode == 10 ? PeditCharacter.AMBER : 0x71e6bb);
         c.text(2, 1, "WASD | +/- formaat | B grond | P animatie | R reset | M menu | Q stop");
         if (width < 64 || sw < aw + 8 || sh < ah + 5) {
             world = null;
@@ -139,10 +141,11 @@ public final class Main {
         boolean moving = animate && now - lastMovement < 180_000_000L;
         int pose = moving ? (steps / 2) % 2 : 0;
         // An arbitrary external image is kept intact; only our own hero has leg poses.
-        if (pose == 1 && !(custom != null && mode >= 5)) sprite = sprite.walking(pose);
+        if (mode == 10) sprite = PeditCharacter.create(SIZES[sizeIndex], pose);
+        else if (pose == 1 && !(custom != null && mode >= 5)) sprite = sprite.walking(pose);
         for (int i = 0; i < panels; i++) {
             PixelRenderer method = panels == 3 ? PixelRenderer.values()[i] : renderer();
-            Canvas scene = world.draw(checker);
+            Canvas scene = world.draw(checker, mode == 10);
             if (art != null) art.draw(scene, x, y, pose);
             else method.draw(scene, sprite, x, y);
             int left = 2 + i * panelWidth;
@@ -153,7 +156,8 @@ public final class Main {
         }
         c.text(2, height - 3, "Sprite: " + (art != null ? "tekst (vast formaat)" : SIZES[sizeIndex] + "x" + SIZES[sizeIndex] + " px")
             + " | positie " + x + "," + y + " | animatie " + (animate ? "aan" : "uit"));
-        c.text(2, height - 2, mode >= 5 ? "PNG: " + source + " | transparantie op achtergrond" : "# en + zijn obstakels; het hele kader van het poppetje botst.");
+        c.text(2, height - 2, mode == 10 ? "Pedit5-stijl | amber lijnfiguur met zwaard en schild | B: grond"
+            : mode >= 5 ? "PNG: " + source + " | transparantie op achtergrond" : "# en + zijn obstakels; het hele kader van het poppetje botst.");
         c.text(2, height - 1, stats + " | verschillenbuffer, maximaal circa 30 fps", 0x8ca6b4);
         return c;
     }
@@ -162,6 +166,7 @@ public final class Main {
         if (key == 'q' || key == 3 || key == 4) { running = false; return; }
         if (key >= '1' && key <= '9') { mode = key - '0'; reset(); return; }
         switch (key) {
+            case '0' -> { mode = 10; checker = false; reset(); }
             case 'm', 27 -> { mode = 0; world = null; }
             case '+', '=' -> { sizeIndex = Math.min(2, sizeIndex + 1); reset(); }
             case '-', '_' -> { sizeIndex = Math.max(0, sizeIndex - 1); reset(); }

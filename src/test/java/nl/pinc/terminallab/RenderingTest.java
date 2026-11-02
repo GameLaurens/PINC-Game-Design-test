@@ -98,10 +98,10 @@ class RenderingTest {
         assertFalse(w.canPlace(75, 2, 8, 8));
         assertFalse(w.canPlace(13, 3, 8, 8));
     }
-    @Test void allNineDemosRenderAndRespondToMovementAtEverySize() throws Exception {
-        for (int size : new int[]{8, 16, 32}) for (int mode = 1; mode <= 9; mode++) {
+    @Test void allTenDemosRenderAndRespondToMovementAtEverySize() throws Exception {
+        for (int size : new int[]{8, 16, 32}) for (int mode = 1; mode <= 10; mode++) {
             Main app = new Main(null, "test", size);
-            app.handle('0' + mode);
+            app.handle(mode == 10 ? '0' : '0' + mode);
             Canvas before = app.demo(160, 55, System.nanoTime(), "");
             app.handle('d');
             Canvas after = app.demo(160, 55, System.nanoTime(), "");
@@ -113,8 +113,8 @@ class RenderingTest {
     }
     @Test void resizingToTinyTerminalAndBackDoesNotBreakAnyDemo() throws Exception {
         Main app = new Main(null, "test", 32);
-        for (int mode = 1; mode <= 9; mode++) {
-            app.handle('0' + mode);
+        for (int mode = 1; mode <= 10; mode++) {
+            app.handle(mode == 10 ? '0' : '0' + mode);
             assertDoesNotThrow(() -> app.demo(1, 1, System.nanoTime(), ""));
             assertDoesNotThrow(() -> app.demo(160, 55, System.nanoTime(), ""));
         }
@@ -124,5 +124,33 @@ class RenderingTest {
         assertEquals('O', c.get(1, 0).glyph());
         assertEquals('/', c.get(0, 1).glyph());
         assertEquals('\\', c.get(2, 1).glyph());
+    }
+    @Test void peditCharacterHasTransparentGapsAmberStrokesAndTwoLegPoses() {
+        for (int size : new int[]{8, 16, 32}) {
+            Sprite still = PeditCharacter.create(size, 0), walk = PeditCharacter.create(size, 1);
+            int changes = 0, ink = 0;
+            for (int y = 0; y < size; y++) for (int x = 0; x < size; x++) {
+                int pixel = still.pixel(x, y);
+                assertTrue(pixel == 0 || pixel == (0xff000000 | PeditCharacter.AMBER));
+                if (pixel != 0) ink++;
+                if (pixel != walk.pixel(x, y)) changes++;
+                if (y < size * 2 / 3) assertEquals(pixel, walk.pixel(x, y), "Hoofd, zwaard en schild blijven stabiel");
+            }
+            assertTrue(ink > 0 && ink < size * size / 2);
+            assertTrue(changes > 0, "Loopposes moeten verschillen op formaat " + size);
+        }
+    }
+    @Test void peditDemoKeepsOwnCharacterWhenAnExternalPngIsSelected() throws Exception {
+        Main app = new Main(new Sprite(1, 1, new int[]{0xffff00ff}), "eigen PNG", 16);
+        app.handle('0');
+        Canvas frame = app.demo(80, 30, System.nanoTime(), "");
+        int amberPixels = 0;
+        for (int y = 4; y < 26; y++) for (int x = 2; x < 77; x++) {
+            Cell cell = frame.get(x, y);
+            assertNotEquals(0xff00ff, cell.foreground());
+            assertNotEquals(0xff00ff, cell.background());
+            if (cell.glyph() == '▀' && cell.foreground() == PeditCharacter.AMBER) amberPixels++;
+        }
+        assertTrue(amberPixels > 0);
     }
 }

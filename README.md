@@ -1,6 +1,6 @@
 # Terminal Sprite Lab
 
-Een kleine Java-applicatie om **negen werkende, bestuurbare terminaldemo's** te vergelijken. Alles verschijnt in dezelfde terminal: ASCII, Unicode, RGB-blokken en PNG-sprites. Geen Swing/JavaFX-venster, Sixel of Kitty Graphics.
+Een kleine Java-applicatie om **tien werkende, bestuurbare terminaldemo's** te vergelijken. Alles verschijnt in dezelfde terminal: ASCII, Unicode, RGB-blokken en PNG-sprites. Geen Swing/JavaFX-venster, Sixel of Kitty Graphics.
 
 ## Starten in PowerShell
 
@@ -47,6 +47,7 @@ Er is ook een optioneel PowerShell-script: `.\run.ps1 -Png 'pad.png' -Size 16`, 
 | Toets | Actie |
 |---|---|
 | `1`–`9` | Open meteen een demo, ook vanuit een andere demo |
+| `0` | Open de pedit5-variant: amber avonturier met zwaard en schild |
 | `W A S D` | Beweeg omhoog, links, omlaag en rechts, zonder Enter |
 | `+` / `-` | Kies 8×8, 16×16 of 32×32 pixels; positie wordt hersteld |
 | `B` | Wissel tussen dambordachtergrond en egale grond |
@@ -59,7 +60,7 @@ Alle demo's hebben een achtergrond, muren en bij voldoende ruimte enkele bruine 
 
 De ingebouwde held heeft twee beenposes tijdens beweging. De tekstpoppetjes hebben ook twee poses. Een eigen PNG blijft ongewijzigd; er is geen aanname over waar de benen zitten. Beweging gebeurt per ontvangen teken. Een ingedrukte toets gebruikt de herhaling van het besturingssysteem; het programma ontvangt geen betrouwbare key-up-events of gelijktijdige WASD-toestanden.
 
-## De negen demo's
+## De tien demo's
 
 | Menu | Techniek | Wat je ziet |
 |---|---|---|
@@ -72,8 +73,17 @@ De ingebouwde held heeft twee beenposes tijdens beweging. De tekstpoppetjes hebb
 | 7 | Spatie + achtergrondkleur | Eén bronpixel per terminalcel |
 | 8 | `▀` + voor- en achtergrondkleur | Twee verticale bronpixels per terminalcel |
 | 9 | Vergelijking naast elkaar | Dezelfde sprite, achtergrond, invoer en positie met methodes 6–8 |
+| 0 | Pedit5-stijl | Amberkleurig lijnpoppetje met zwaard en schild op zwart, getekend met `▀` |
 
 Demo's 4 en 6 gebruiken bewust dezelfde blokrenderer: 4 toont de gekleurde voorbeeldheld, 6 is onderdeel van de rastervergelijking en kan een eigen PNG gebruiken. Demo's 5 en 8 delen de halfblokrenderer: PNG is de invoerbron; de manier van tekenen is daarvan onafhankelijk.
+
+### Pedit5-poppetje proberen
+
+Start met `.\run.cmd` en druk op **`0`**. Je ziet een eigen interpretatie van het kleine avonturiersfiguurtje uit pedit5: een hoofd, eenvoudige tuniek, benen, een lang zwaard links en een rond schild rechts. De amberkleurige lijnen op een zwarte achtergrond sluiten aan bij de [gameplayscreenshots van pedit5](https://howtomakeanrpg.com/r/l/g/the-dungeon/). Het is een nieuw getekende variant, geen exacte kopie of PLATO-emulator.
+
+Beweeg met **WASD**, wissel met **+ / -** tussen 8×8, 16×16 en 32×32 en gebruik **P** voor de loopanimatie. Op 32×32 zijn de dunne lijnen en het schild het duidelijkst; op 8×8 vallen kleine details samen. **B** zet een subtiel amber dambord aan om de transparantie te bekijken. Het poppetje gebruikt de bestaande halfblokrenderer, botsingen en verschillenbuffer. Een met `--png` gekozen bestand vervangt dit personage niet.
+
+De contouren staan in [`PeditCharacter.java`](src/main/java/nl/pinc/terminallab/PeditCharacter.java) als lijnsegmenten. Ze worden op ieder formaat opnieuw gerasterd met lijnen van één bronpixel breed, zodat het een fijn lijnfiguurtje blijft. De twee loopposes veranderen alleen de benen.
 
 **Visueel verschil:** terminalcellen zijn doorgaans ongeveer twee keer zo hoog als breed. Zowel `█` als een gekleurde spatie vult één hele cel, waardoor de sprite verticaal uitgerekt is. Deze twee methodes horen bij een goed lettertype vrijwel hetzelfde te ogen; eventuele naden/verschillen komen uit de glyphweergave. `▀` verdeelt dezelfde cel in twee kleuren, waardoor bronpixels veel dichter bij vierkant komen. Het precieze resultaat hangt af van lettertype, regelafstand en terminal.
 
@@ -148,6 +158,7 @@ Stuur in een multiplayergame logische speltoestand/posities over het netwerk en 
 | `Sprite` | PNG-decoder, schalen en ingebouwde beenpose |
 | `PixelRenderer` | Drie los te testen pixelmethodes |
 | `TextArt` | ASCII- en Unicode-poses |
+| `PeditCharacter` | Pedit5-geïnspireerde amber lijnsprite en twee beenposes |
 | `Canvas` / `Cell` | Volledig samengesteld frame met kleuren |
 | `AnsiDisplay` | Verschillenbuffer en ANSI-uitvoer |
 | `World` | Achtergrond, obstakels en botsingen |
@@ -158,4 +169,4 @@ mvn test
 mvn '-Dmaven.repo.local=.cache/maven' test
 ```
 
-De automatische tests controleren de drie pixelstrategieën, transparantie (ook gedeeltelijk en bij oneven hoogtes), PNG-decoding, afmetingen/aspectratio, ongeldige invoer, clipping, obstakels, schermverschillen zonder wisactie en beweging in alle negen demo's op alle drie formaten. Ze vereisen geen echte terminal. De interactieve Windows-controle moet daarnaast de native invoer en herstelinstellingen toetsen: start de JAR, kies een demo zonder Enter, beweeg met WASD, vergelijk 6/7/8/9, wissel formaat, keer terug naar het menu en sluit af met Q of Ctrl+C.
+De automatische tests controleren de drie pixelstrategieën, transparantie (ook gedeeltelijk en bij oneven hoogtes), PNG-decoding, afmetingen/aspectratio, ongeldige invoer, clipping, obstakels, schermverschillen zonder wisactie en beweging in alle tien demo's op alle drie formaten. Voor het pedit5-personage controleren ze ook de amberkleur, transparante gaten, stabiele bovenlichaamcontouren en verschillende beenposes. Ze vereisen geen echte terminal. De interactieve Windows-controle moet daarnaast de native invoer en herstelinstellingen toetsen: start de JAR, kies een demo zonder Enter, beweeg met WASD, vergelijk 6/7/8/9, probeer 0, wissel formaat, keer terug naar het menu en sluit af met Q of Ctrl+C.
