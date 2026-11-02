@@ -38,7 +38,15 @@ Een eigen PNG laden:
 java --enable-native-access=ALL-UNNAMED -jar target/terminal-sprite-lab.jar --png 'C:\sprites\held.png' --size 32
 ```
 
-Een eigen PNG wordt gebruikt in demo's 5–9; demo 4 houdt de ingebouwde gekleurde held. PNG's mogen maximaal 512×512 pixels en 8 MiB zijn. De afbeelding wordt met nearest-neighbor passend gemaakt op het gekozen vierkante raster, met behoud van verhoudingen en transparante opvulling. Een onjuist bestand geeft een fout vóórdat de terminalinstellingen worden gewijzigd.
+Een eigen PNG wordt gebruikt in demo's 5–9; demo 4 houdt de ingebouwde gekleurde held. PNG's mogen maximaal 4096 pixels per zijde, 4.194.304 pixels totaal en 8 MiB zijn. De afbeelding wordt met nearest-neighbor passend gemaakt op het gekozen vierkante raster, met behoud van verhoudingen en transparante opvulling. Een onjuist bestand geeft een fout vóórdat de terminalinstellingen worden gewijzigd.
+
+Een bestand toevoegen aan `src/main/resources/sprites` selecteert het niet automatisch. Geef het pad mee bij het starten, bijvoorbeeld:
+
+```powershell
+.\run.cmd --png '.\src\main\resources\sprites\poppetje.png' --size 32
+```
+
+Kies daarna **5** voor de PNG-demo. Een al draaiende game moet eerst met **Q** worden afgesloten en opnieuw worden gestart. Kies een voldoende hoog venster voor 32×32, of druk op **-** om naar 16×16 te gaan. Een grote foto kan zo geladen worden, maar wordt in de huidige demo nog steeds naar maximaal 32×32 beeldpunten verkleind.
 
 Er is ook een optioneel PowerShell-script: `.\run.ps1 -Png 'pad.png' -Size 16`, met `-Build` om opnieuw te bouwen. Als de bestaande execution policy dit blokkeert, gebruik dan `run.cmd` of het rechtstreekse Java-commando hierboven.
 

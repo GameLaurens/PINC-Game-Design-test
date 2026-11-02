@@ -10,6 +10,8 @@ import javax.imageio.stream.ImageInputStream;
 
 /** ARGB raster; ImageIO only decodes pixels and never opens a window. */
 public final class Sprite {
+    private static final int MAX_DIMENSION = 4096;
+    private static final long MAX_PIXELS = 4L * 1024 * 1024;
     private final int width, height;
     private final int[] pixels;
     public Sprite(int width, int height, int[] pixels) {
@@ -39,7 +41,8 @@ public final class Sprite {
                 if (!reader.getFormatName().equalsIgnoreCase("png")) throw new IOException("Alleen PNG wordt ondersteund.");
                 reader.setInput(image);
                 int w = reader.getWidth(0), h = reader.getHeight(0);
-                if (w < 1 || h < 1 || w > 512 || h > 512) throw new IOException("PNG moet 1 tot 512 pixels per zijde zijn.");
+                if (w < 1 || h < 1 || w > MAX_DIMENSION || h > MAX_DIMENSION || (long) w * h > MAX_PIXELS)
+                    throw new IOException("PNG mag maximaal 4096 pixels per zijde en 4.194.304 pixels totaal bevatten.");
                 var raster = reader.read(0);
                 return new Sprite(w, h, raster.getRGB(0, 0, w, h, null, 0, w));
             } finally { reader.dispose(); }

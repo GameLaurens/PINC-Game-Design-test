@@ -88,8 +88,21 @@ class RenderingTest {
         Path invalid = dir.resolve("invalid.png"); Files.writeString(invalid, "geen PNG");
         assertThrows(java.io.IOException.class, () -> Sprite.load(invalid));
         Path big = dir.resolve("big.png");
-        javax.imageio.ImageIO.write(new java.awt.image.BufferedImage(513, 1, 2), "PNG", big.toFile());
+        javax.imageio.ImageIO.write(new java.awt.image.BufferedImage(4097, 1, 2), "PNG", big.toFile());
         assertThrows(java.io.IOException.class, () -> Sprite.load(big));
+    }
+    @Test void normalLargePngCanBeLoadedAndReducedToTerminalSize(@TempDir Path dir) throws Exception {
+        var image = new java.awt.image.BufferedImage(779, 909, java.awt.image.BufferedImage.TYPE_INT_ARGB);
+        image.setRGB(0, 0, 0xff55aacc);
+        Path path = dir.resolve("poppetje.png");
+        javax.imageio.ImageIO.write(image, "PNG", path.toFile());
+        Sprite original = Sprite.load(path), reduced = original.fit(32);
+        assertEquals(779, original.width());
+        assertEquals(909, original.height());
+        assertEquals(32, reduced.width());
+        assertEquals(32, reduced.height());
+        assertEquals(0xff55aacc, reduced.pixel(2, 0));
+        assertEquals(0, reduced.pixel(0, 0));
     }
     @Test void worldRejectsWallsAndObstaclesButAllowsSpawn() {
         World w = new World(80, 30, 8, 8);
