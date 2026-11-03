@@ -6,7 +6,7 @@ import org.jline.utils.NonBlockingReader;
 
 public final class Main {
     private static final String[] MODES = {
-        "ASCII - eenvoudig", "ASCII - gedetailleerd", "Unicode - vormen en blokken",
+        "ASCII - level 1: monsters, kist en wapens", "ASCII - gedetailleerd", "Unicode - vormen en blokken",
         "ANSI True Color - gekleurd poppetje", "PNG - transparante terminalpixels",
         "ANSI - een pixel per voorgrondblok", "ANSI - een pixel per achtergrond",
         "ANSI - twee verticale pixels per teken", "Vergelijk de drie ANSI-methodes",
@@ -21,6 +21,7 @@ public final class Main {
     private long lastMovement;
     private int sceneWidth, sceneHeight, actorWidth, actorHeight;
     private World world;
+    private AsciiLevel asciiLevel;
 
     Main(Sprite custom, String source, int size) throws IOException {
         this.custom = custom; this.source = source;
@@ -60,6 +61,7 @@ public final class Main {
         System.out.println("Terminal Sprite Lab | Java 17+ | ANSI + UTF-8");
         System.out.println("java --enable-native-access=ALL-UNNAMED -jar target/terminal-sprite-lab.jar [--png pad.png] [--size 8|16|32]");
         System.out.println("1-9: demo | 0: pedit5-stijl | WASD: bewegen | +/-: formaat | B: achtergrond | P: animatie | R: positie | M/Esc: menu | Q: stop");
+        System.out.println("Level 1: E pakken/kist openen | F wapen wisselen | Spatie aanvallen | R level opnieuw");
     }
     private void run() throws IOException {
         try (TerminalSession session = new TerminalSession()) {
@@ -116,6 +118,7 @@ public final class Main {
         return custom != null && mode >= 5 ? custom.fit(SIZES[sizeIndex]) : examples[sizeIndex];
     }
     Canvas demo(int width, int height, long now, String stats) {
+        if (mode == 1) return asciiLevel(width, height, now, stats);
         Canvas c = new Canvas(width, height);
         TextArt art = art();
         Sprite sprite = currentSprite();
@@ -161,15 +164,40 @@ public final class Main {
         c.text(2, height - 1, stats + " | verschillenbuffer, maximaal circa 30 fps", 0x8ca6b4);
         return c;
     }
+    private Canvas asciiLevel(int width, int height, long now, String stats) {
+        Canvas c = new Canvas(width, height);
+        c.text(2, 0, "LEVEL 1 - ASCII monsters en buit", 0x71e6bb);
+        c.text(2, 1, "WASD bewegen | E pakken/openen | Spatie aanvallen");
+        c.text(2, 2, "F wapen | B grond | P animatie | R reset | M menu | Q stop");
+        if (asciiLevel == null && width >= 64 && height >= 22)
+            asciiLevel = new AsciiLevel(Math.min(110, width - 4), Math.min(28, height - 8));
+        if (asciiLevel == null || width < asciiLevel.width() + 4 || height < asciiLevel.height() + 8) {
+            int neededWidth = asciiLevel == null ? 64 : asciiLevel.width() + 4;
+            int neededHeight = asciiLevel == null ? 22 : asciiLevel.height() + 8;
+            c.text(2, 5, "Vergroot het venster: dit level vereist " + neededWidth + "x" + neededHeight + " cellen.");
+            if (asciiLevel != null) c.text(2, 7, "Voortgang bewaard. R maakt een nieuw level voor dit venster.");
+            return c;
+        }
+        c.text(2, 3, "Slijm / goblin / skelet | Zwaard + bijl | Kist met buit", 0x8ca6b4);
+        c.blit(asciiLevel.draw(now, checker, animate), 2, 4);
+        c.text(2, height - 3, "Wapen: " + asciiLevel.weapon().label() + " | Goud: " + asciiLevel.gold()
+            + " | Monsters: " + asciiLevel.monstersRemaining() + " | Wapens: " + asciiLevel.inventory().size());
+        c.text(2, height - 2, asciiLevel.message(), 0xffd180);
+        c.text(2, height - 1, stats + " | ASCII-tekens + ANSI-kleuren", 0x8ca6b4);
+        return c;
+    }
     void handle(int input) {
         int key = Character.toLowerCase(input);
         if (key == 'q' || key == 3 || key == 4) { running = false; return; }
         if (key >= '1' && key <= '9') { mode = key - '0'; reset(); return; }
         switch (key) {
+            case 'e' -> { if (mode == 1 && asciiLevel != null) asciiLevel.interact(); }
+            case 'f' -> { if (mode == 1 && asciiLevel != null) asciiLevel.nextWeapon(); }
+            case ' ' -> { if (mode == 1 && asciiLevel != null) asciiLevel.attack(System.nanoTime()); }
             case '0' -> { mode = 10; checker = false; reset(); }
             case 'm', 27 -> { mode = 0; world = null; }
-            case '+', '=' -> { sizeIndex = Math.min(2, sizeIndex + 1); reset(); }
-            case '-', '_' -> { sizeIndex = Math.max(0, sizeIndex - 1); reset(); }
+            case '+', '=' -> { if (mode != 1) { sizeIndex = Math.min(2, sizeIndex + 1); reset(); } }
+            case '-', '_' -> { if (mode != 1) { sizeIndex = Math.max(0, sizeIndex - 1); reset(); } }
             case 'b' -> checker = !checker;
             case 'p' -> animate = !animate;
             case 'r' -> reset();
@@ -180,8 +208,12 @@ public final class Main {
             default -> { }
         }
     }
-    private void reset() { x = 2; y = 2; steps = 0; lastMovement = 0; world = null; }
+    private void reset() { x = 2; y = 2; steps = 0; lastMovement = 0; world = null; asciiLevel = null; }
     private void move(int dx, int dy) {
+        if (mode == 1) {
+            if (asciiLevel != null) asciiLevel.move(dx, dy, System.nanoTime());
+            return;
+        }
         if (mode == 0 || world == null || !world.canPlace(x + dx, y + dy, actorWidth, actorHeight)) return;
         x += dx; y += dy; steps++; lastMovement = System.nanoTime();
     }

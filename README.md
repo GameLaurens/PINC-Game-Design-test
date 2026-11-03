@@ -50,6 +50,36 @@ Kies daarna **5** voor de PNG-demo. Een al draaiende game moet eerst met **Q** w
 
 Er is ook een optioneel PowerShell-script: `.\run.ps1 -Png 'pad.png' -Size 16`, met `-Build` om opnieuw te bouwen. Als de bestaande execution policy dit blokkeert, gebruik dan `run.cmd` of het rechtstreekse Java-commando hierboven.
 
+## Level 1: monsters, kist en wapens
+
+Start met `.\run.cmd` en kies **1**. Dit level gebruikt alleen ASCII-tekens voor de modellen, met ANSI-kleuren voor herkenbaarheid. Het werkt in PowerShell binnen Windows Terminal of WezTerm. Er is geen afbeelding of afbeeldingsprotocol nodig.
+
+Je vindt een **slijm**, **goblin** en **skelet**, een schatkist en twee wapens op de grond. Het bekende kleine `O /|\ / \`-poppetje blijft de speler. Een uitgerust wapen wordt ernaast getekend; het zwaard is vier regels hoog tegenover drie regels voor de speler.
+
+| Toets | Actie in level 1 |
+|---|---|
+| WASD | Bewegen, zonder Enter |
+| **E** | Een nabijgelegen wapen oppakken of de kist openen |
+| **F** | Wisselen tussen verzamelde wapens |
+| **Spatie** | Het dichtstbijzijnde monster binnen bereik aanvallen |
+| B / P | Achtergrond / eenvoudige beenanimatie wisselen |
+| **R** | Het level opnieuw beginnen, inclusief buit en monsters |
+| M / Q | Hoofdmenu / afsluiten |
+
+Het **zwaard** en de **bijl** verdwijnen van de grond zodra je ze oppakt en worden meteen uitgerust. De **kist** krijgt een open model en geeft eenmalig **5 goud en een dolk**. Eerder verzamelde wapens blijven beschikbaar via F. Onder het speelveld staan je huidige wapen, goud, aantal monsters en een melding over de laatste handeling.
+
+| Wapen | Schade per aanval | Bereik buiten het spelerskader |
+|---|---:|---:|
+| Zwaard | 2 | 2 cellen |
+| Bijl | 3 | 1 cel |
+| Dolk | 1 | 1 cel |
+
+De monsters hebben respectievelijk 2, 3 en 4 leven. Ze staan stil in deze proefopstelling. Een treffer licht kort rood op; verslagen monsters verdwijnen en geven 2 goud. Aanvallen heeft een korte wachttijd van 200 ms. De speler botst met muren, monsters en de kist. Het spelerskader reserveert steeds 7×4 cellen zodat ook een uitgerust wapen past; daardoor tellen enkele lege cellen mee voor botsingen.
+
+Een venster van **80×24 tekencellen** is genoeg. Het level past zich bij het openen aan het beschikbare venster aan, vanaf 64×22 gebruikte cellen. Bij verkleinen blijft de voortgang bewaard en verschijnt zo nodig een melding; vergroot het venster weer of gebruik R om een nieuw level voor het kleinere venster te maken. `+` en `-` veranderen alleen spriteformaten in de andere demo's.
+
+Een nieuw tekstmodel toevoegen kan in [`AsciiLevel.java`](src/main/java/nl/pinc/terminallab/AsciiLevel.java): voeg een `MonsterType` toe met naam, leven, kleur en een `AsciiModel` met tekstregels. Voeg daarna een exemplaar met een positie toe aan het level. [`AsciiModel.java`](src/main/java/nl/pinc/terminallab/AsciiModel.java) tekent die regels en laat spaties transparant, zodat dezelfde aanpak ook voor nieuwe kisten en wapens bruikbaar is.
+
 ## Bediening
 
 | Toets | Actie |
@@ -57,6 +87,7 @@ Er is ook een optioneel PowerShell-script: `.\run.ps1 -Png 'pad.png' -Size 16`, 
 | `1`–`9` | Open meteen een demo, ook vanuit een andere demo |
 | `0` | Open de pedit5-variant: amber avonturier met zwaard en schild |
 | `W A S D` | Beweeg omhoog, links, omlaag en rechts, zonder Enter |
+| `E` / `F` / Spatie | In level 1: pakken/openen, wapen wisselen, aanvallen |
 | `+` / `-` | Kies 8×8, 16×16 of 32×32 pixels; positie wordt hersteld |
 | `B` | Wissel tussen dambordachtergrond en egale grond |
 | `P` | Schakel de eenvoudige loopanimatie in/uit |
@@ -72,7 +103,7 @@ De ingebouwde held heeft twee beenposes tijdens beweging. De tekstpoppetjes hebb
 
 | Menu | Techniek | Wat je ziet |
 |---|---|---|
-| 1 | Eenvoudige ASCII | `O`, `/`, `|`, `\` in een figuurtje van 3×3 |
+| 1 | ASCII-level | Het kleine tekstpoppetje, drie monstertypes, een kist en zichtbare uitrusting |
 | 2 | Gedetailleerde ASCII | Gezicht, jas, armen en schoenen over meerdere regels |
 | 3 | Unicode-art | `█`, `▀`, `▄`, `▐`, `▌` en kleine gezichtselementen |
 | 4 | Gekleurde Unicode | RGB-held met haar, huid, turquoise jas, riem, broek en schoenen |
@@ -170,6 +201,8 @@ Stuur in een multiplayergame logische speltoestand/posities over het netwerk en 
 | `Canvas` / `Cell` | Volledig samengesteld frame met kleuren |
 | `AnsiDisplay` | Verschillenbuffer en ANSI-uitvoer |
 | `World` | Achtergrond, obstakels en botsingen |
+| `AsciiLevel` | Level 1: monsters, kist, oppakken, uitrusten en aanvallen |
+| `AsciiModel` | Herbruikbare modellen van alleen ASCII-tekstregels |
 
 ```powershell
 mvn test
@@ -178,3 +211,5 @@ mvn '-Dmaven.repo.local=.cache/maven' test
 ```
 
 De automatische tests controleren de drie pixelstrategieën, transparantie (ook gedeeltelijk en bij oneven hoogtes), PNG-decoding, afmetingen/aspectratio, ongeldige invoer, clipping, obstakels, schermverschillen zonder wisactie en beweging in alle tien demo's op alle drie formaten. Voor het pedit5-personage controleren ze ook de amberkleur, transparante gaten, stabiele bovenlichaamcontouren en verschillende beenposes. Ze vereisen geen echte terminal. De interactieve Windows-controle moet daarnaast de native invoer en herstelinstellingen toetsen: start de JAR, kies een demo zonder Enter, beweeg met WASD, vergelijk 6/7/8/9, probeer 0, wissel formaat, keer terug naar het menu en sluit af met Q of Ctrl+C.
+
+De leveltests lopen via echte routes naar wapens, kist en monsters op drie veldformaten. Ze controleren zichtbaar gedragen wapens, de eenmalige kistbeloning, wisselen van uitrusting, bereik en wachttijd van aanvallen, botsingen, ASCII-modeltekens en de koppeling met het hoofdmenu en resetten.
