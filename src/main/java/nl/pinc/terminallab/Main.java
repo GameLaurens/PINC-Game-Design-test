@@ -7,7 +7,7 @@ import org.jline.utils.NonBlockingReader;
 public final class Main {
     private static final String[] MODES = {
         "ASCII - level 1: monsters, kist en wapens", "Free for All - grote ASCII-wereld met bots", "Unicode - vormen en blokken",
-        "ANSI True Color - gekleurd poppetje", "PNG - transparante terminalpixels",
+        "Monstershowroom - 15 ASCII-monsters", "Wapenshowroom - oppakken en testen",
         "ANSI - een pixel per voorgrondblok", "ANSI - een pixel per achtergrond",
         "ANSI - twee verticale pixels per teken", "Vergelijk de drie ANSI-methodes",
         "Pedit5-stijl - amber avonturier met zwaard en schild"
@@ -23,6 +23,7 @@ public final class Main {
     private World world;
     private AsciiLevel asciiLevel;
     private FreeForAllView freeForAll;
+    private Showroom showroom;
 
     Main(Sprite custom, String source, int size) throws IOException {
         this.custom = custom; this.source = source;
@@ -64,6 +65,7 @@ public final class Main {
         System.out.println("1-9: demo | 0: pedit5-stijl | WASD: bewegen | +/-: formaat | B: achtergrond | P: animatie | R: positie | M/Esc: menu | Q: stop");
         System.out.println("Level 1: E pakken/kist openen | F wapen wisselen | Spatie aanvallen | R level opnieuw");
         System.out.println("Demo 2 FFA: WASD lopen | pijlen aanvallen | U upgrades (1-4) | Tab ranglijst | Enter respawn");
+        System.out.println("Demo 4: 15 ASCII-monsters | Demo 5: E wapens pakken, F wisselen, pijlen/Spatie aanvallen, V bereik");
     }
     private void run() throws IOException {
         try (TerminalSession session = new TerminalSession()) {
@@ -112,20 +114,24 @@ public final class Main {
     private TextArt art() { return switch (mode) { case 1 -> TextArt.ASCII; case 3 -> TextArt.UNICODE; default -> null; }; }
     private PixelRenderer renderer() {
         return switch (mode) {
-            case 4, 6 -> PixelRenderer.FULL_BLOCK;
+            case 6 -> PixelRenderer.FULL_BLOCK;
             case 7 -> PixelRenderer.BACKGROUND;
             default -> PixelRenderer.HALF_BLOCK;
         };
     }
     private Sprite currentSprite() {
         if (mode == 10) return PeditCharacter.create(SIZES[sizeIndex], 0);
-        return custom != null && mode >= 5 ? custom.fit(SIZES[sizeIndex]) : examples[sizeIndex];
+        return custom != null && mode >= 6 ? custom.fit(SIZES[sizeIndex]) : examples[sizeIndex];
     }
     Canvas demo(int width, int height, long now, String stats) {
         if (mode == 1) return asciiLevel(width, height, now, stats);
         if (mode == 2) {
             if (freeForAll == null) freeForAll = new FreeForAllView(now);
             return freeForAll.frame(width, height, now, checker, animate);
+        }
+        if (mode == 4 || mode == 5) {
+            if (showroom == null) showroom = new Showroom(mode == 5);
+            return showroom.frame(width, height, now, checker, animate);
         }
         Canvas c = new Canvas(width, height);
         TextArt art = art();
@@ -153,7 +159,7 @@ public final class Main {
         int pose = moving ? (steps / 2) % 2 : 0;
         // An arbitrary external image is kept intact; only our own hero has leg poses.
         if (mode == 10) sprite = PeditCharacter.create(SIZES[sizeIndex], pose);
-        else if (pose == 1 && !(custom != null && mode >= 5)) sprite = sprite.walking(pose);
+        else if (pose == 1 && !(custom != null && mode >= 6)) sprite = sprite.walking(pose);
         for (int i = 0; i < panels; i++) {
             PixelRenderer method = panels == 3 ? PixelRenderer.values()[i] : renderer();
             Canvas scene = world.draw(checker, mode == 10);
@@ -168,7 +174,7 @@ public final class Main {
         c.text(2, height - 3, "Sprite: " + (art != null ? "tekst (vast formaat)" : SIZES[sizeIndex] + "x" + SIZES[sizeIndex] + " px")
             + " | positie " + x + "," + y + " | animatie " + (animate ? "aan" : "uit"));
         c.text(2, height - 2, mode == 10 ? "Pedit5-stijl | amber lijnfiguur met zwaard en schild | B: grond"
-            : mode >= 5 ? "PNG: " + source + " | transparantie op achtergrond" : "# en + zijn obstakels; het hele kader van het poppetje botst.");
+            : mode >= 6 ? "PNG: " + source + " | transparantie op achtergrond" : "# en + zijn obstakels; het hele kader van het poppetje botst.");
         c.text(2, height - 1, stats + " | verschillenbuffer, maximaal circa 30 fps", 0x8ca6b4);
         return c;
     }
@@ -198,6 +204,7 @@ public final class Main {
         int key = Character.toLowerCase(input);
         if (key == 'q' || key == 3 || key == 4) { running = false; return; }
         if (mode == 2 && freeForAll != null && freeForAll.handle(input, System.nanoTime())) return;
+        if ((mode == 4 || mode == 5) && showroom != null && showroom.handle(input, System.nanoTime())) return;
         if (key >= '1' && key <= '9') { mode = key - '0'; reset(); return; }
         switch (key) {
             case 'e' -> { if (mode == 1 && asciiLevel != null) asciiLevel.interact(); }
@@ -205,8 +212,8 @@ public final class Main {
             case ' ' -> { if (mode == 1 && asciiLevel != null) asciiLevel.attack(System.nanoTime()); }
             case '0' -> { mode = 10; checker = false; reset(); }
             case 'm', 27 -> { mode = 0; world = null; }
-            case '+', '=' -> { if (mode != 1 && mode != 2) { sizeIndex = Math.min(2, sizeIndex + 1); reset(); } }
-            case '-', '_' -> { if (mode != 1 && mode != 2) { sizeIndex = Math.max(0, sizeIndex - 1); reset(); } }
+            case '+', '=' -> { if (mode != 1 && mode != 2 && mode != 4 && mode != 5) { sizeIndex = Math.min(2, sizeIndex + 1); reset(); } }
+            case '-', '_' -> { if (mode != 1 && mode != 2 && mode != 4 && mode != 5) { sizeIndex = Math.max(0, sizeIndex - 1); reset(); } }
             case 'b' -> checker = !checker;
             case 'p' -> animate = !animate;
             case 'r' -> reset();
@@ -217,7 +224,7 @@ public final class Main {
             default -> { }
         }
     }
-    private void reset() { x = 2; y = 2; steps = 0; lastMovement = 0; world = null; asciiLevel = null; freeForAll = null; }
+    private void reset() { x = 2; y = 2; steps = 0; lastMovement = 0; world = null; asciiLevel = null; freeForAll = null; showroom = null; }
     private void move(int dx, int dy) {
         if (mode == 1) {
             if (asciiLevel != null) asciiLevel.move(dx, dy, System.nanoTime());

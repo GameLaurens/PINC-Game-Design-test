@@ -38,7 +38,7 @@ Een eigen PNG laden:
 java --enable-native-access=ALL-UNNAMED -jar target/terminal-sprite-lab.jar --png 'C:\sprites\held.png' --size 32
 ```
 
-Een eigen PNG wordt gebruikt in demo's 5–9; demo 4 houdt de ingebouwde gekleurde held. PNG's mogen maximaal 4096 pixels per zijde, 4.194.304 pixels totaal en 8 MiB zijn. De afbeelding wordt met nearest-neighbor passend gemaakt op het gekozen vierkante raster, met behoud van verhoudingen en transparante opvulling. Een onjuist bestand geeft een fout vóórdat de terminalinstellingen worden gewijzigd.
+Een eigen PNG wordt gebruikt in demo's 6–9. Demo's 4 en 5 zijn volledig tekstgebaseerde showrooms en gebruiken geen PNG. PNG's mogen maximaal 4096 pixels per zijde, 4.194.304 pixels totaal en 8 MiB zijn. De afbeelding wordt met nearest-neighbor passend gemaakt op het gekozen vierkante raster, met behoud van verhoudingen en transparante opvulling. Een onjuist bestand geeft een fout vóórdat de terminalinstellingen worden gewijzigd.
 
 Een bestand toevoegen aan `src/main/resources/sprites` selecteert het niet automatisch. Geef het pad mee bij het starten, bijvoorbeeld:
 
@@ -46,7 +46,7 @@ Een bestand toevoegen aan `src/main/resources/sprites` selecteert het niet autom
 .\run.cmd --png '.\src\main\resources\sprites\poppetje.png' --size 32
 ```
 
-Kies daarna **5** voor de PNG-demo. Een al draaiende game moet eerst met **Q** worden afgesloten en opnieuw worden gestart. Kies een voldoende hoog venster voor 32×32, of druk op **-** om naar 16×16 te gaan. Een grote foto kan zo geladen worden, maar wordt in de huidige demo nog steeds naar maximaal 32×32 beeldpunten verkleind.
+Kies daarna **8** voor de PNG-demo met twee pixels per cel. Een al draaiende game moet eerst met **Q** worden afgesloten en opnieuw worden gestart. Kies een voldoende hoog venster voor 32×32, of druk op **-** om naar 16×16 te gaan. Een grote foto kan zo geladen worden, maar wordt in de huidige demo nog steeds naar maximaal 32×32 beeldpunten verkleind.
 
 Er is ook een optioneel PowerShell-script: `.\run.ps1 -Png 'pad.png' -Size 16`, met `-Build` om opnieuw te bouwen. Als de bestaande execution policy dit blokkeert, gebruik dan `run.cmd` of het rechtstreekse Java-commando hierboven.
 
@@ -132,6 +132,55 @@ Na jouw nederlaag druk je **Enter** om op een verspreide vrije positie opnieuw t
 
 Dit is een proefopstelling met eenvoudige lokale bots. Er zijn geen andere menselijke spelers verbonden en er wordt niets opgeslagen na afsluiten of R. De FFA-simulatie staat in [`FreeForAll.java`](src/main/java/nl/pinc/terminallab/FreeForAll.java), de camera/HUD/menu's in [`FreeForAllView.java`](src/main/java/nl/pinc/terminallab/FreeForAllView.java). [`TerminalKeys.java`](src/main/java/nl/pinc/terminallab/TerminalKeys.java) voegt de escape-bytes van pijltjestoetsen samen, zodat een aanval niet per ongeluk als Esc of als WASD wordt verwerkt.
 
+## Demo 4: monstershowroom
+
+Kies **4** voor een begaanbare galerij met **15 verschillende ASCII-monsters**: slijm, goblin, skelet, vleermuis, spin, spook, ork, trol, wolf, mimic, golem, slang, duiveltje, kever en draak. Iedere soort heeft een eigen tekstmodel, kleur, naam en korte beschrijving. De monsters staan stil en vallen je niet aan.
+
+Loop met **WASD** langs de drie rijen met telkens vijf modellen. De camera volgt je over de kaart van **124×44 cellen**; loop ook naar rechts en beneden om alle modellen te zien. Onder het veld staan de gegevens van het dichtstbijzijnde monster. De modellen zijn solide, maar je kunt langs ieder model lopen.
+
+De herbruikbare modellen staan in [`ShowroomCatalog.java`](src/main/java/nl/pinc/terminallab/ShowroomCatalog.java), in `ShowroomCatalog.Monster`. Elk model bestaat uitsluitend uit afdrukbare ASCII-tekens, getekend met `AsciiModel`. De showroom is een catalogus voor toekomstige levels; de bestaande monsters in level 1 en de FFA worden er niet automatisch door vervangen.
+
+## Demo 5: wapenshowroom en testveld
+
+Kies **5** voor **15 oppakbare ASCII-wapens** in drie rijen rekken. Loop naar een wapen en druk **E**: het verdwijnt van de grond, komt in je inventaris en is zichtbaar naast je poppetje. **F** wisselt tussen je verzamelde wapens. Bij een rek zie je de eigenschappen van dat wapen, ook na het oppakken.
+
+Onder de rekken staat op **(60,46)** een **onsterfelijke golem**. Deze beweegt niet en valt niet aan. Een treffer maakt hem 300 ms rood; de HUD toont de laatste schade, het aantal treffers en de totale schade. Er is geen munitielimiet, zodat je alle wapens onbeperkt kunt vergelijken.
+
+| Toets | Actie in demo 5 |
+|---|---|
+| **WASD** | Lopen en kijkrichting veranderen |
+| **E** | Dichtstbijzijnde wapen binnen twee cellen oppakken |
+| **F** | Volgend verzameld wapen uitrusten |
+| **Pijlen** | Meteen aanvallen in die richting |
+| **Spatie** | Aanvallen in je laatste loop-/aanvalsrichting |
+| **V** | Bereikvoorbeeld aan/uit: `.` is bereik, `*` is de aanval |
+| **R** | Begin opnieuw, met lege inventaris en alle wapens terug in de rekken |
+| **M / Esc / Q** | Hoofdmenu / hoofdmenu / afsluiten |
+
+| Wapen | Schade | Bereik | Wachttijd | Aanvalsvorm |
+|---|---:|---:|---:|---|
+| Dolk | 3 | 1 | 180 ms | Smalle rechte lijn |
+| Kortzwaard | 5 | 2 | 280 ms | Brede rechte baan |
+| Langzwaard | 8 | 4 | 450 ms | Brede rechte baan |
+| Slagzwaard | 13 | 5 | 850 ms | Waaier |
+| Rapier | 6 | 6 | 330 ms | Smalle rechte lijn |
+| Katana | 9 | 3 | 300 ms | Waaier |
+| Bijl | 11 | 2 | 650 ms | Waaier |
+| Oorlogshamer | 16 | 2 | 1100 ms | Rondom de speler |
+| Speer | 7 | 8 | 550 ms | Smalle rechte lijn |
+| Hellebaard | 12 | 6 | 800 ms | Waaier |
+| Zweep | 4 | 9 | 400 ms | Brede rechte baan |
+| Boog | 6 | 16 | 500 ms | Smalle rechte lijn |
+| Kruisboog | 15 | 20 | 1200 ms | Smalle rechte lijn |
+| Vuurstaf | 10 | 12 | 700 ms | Brede rechte baan |
+| Bom | 20 | 4 | 1600 ms | Rondom de speler |
+
+Bereik wordt in tekencellen gemeten vanaf het spelerskader van **10×5 cellen**, inclusief gedragen uitrusting. Rechte aanvallen en waaiers raken alleen in de gekozen richting; de hamer en bom raken rondom de speler. Een waaier wordt breder met de afstand. Het bereikvoorbeeld en de schadecontrole gebruiken exact hetzelfde gebied. Afstandsaanvallen raken direct, met een kort zichtbaar tekstspoor; de bom ontploft rondom jezelf. De wapens zijn voorbeelden zonder munitie- of werpsimulatie.
+
+De wereld is **124×58 cellen** en de camera volgt je. Voor beide showrooms is **80×24** bruikbaar, met minimaal **64×22 gebruikte cellen**; een groter venster toont meer modellen tegelijk. Vensterwijzigingen bewaren je positie, inventaris en schadestatistieken. **+ / -** hebben hier geen effect, want alle modellen hebben een vast tekstformaat. **B** en **P** wisselen de achtergrond en loopanimatie.
+
+De wapenmodellen en eigenschappen staan in `ShowroomCatalog.Weapon`; de showroom, camera en gevechtslogica in [`Showroom.java`](src/main/java/nl/pinc/terminallab/Showroom.java). Deze wapens worden nog niet aan level 1 of FFA toegevoegd.
+
 ## Bediening
 
 | Toets | Actie |
@@ -141,6 +190,7 @@ Dit is een proefopstelling met eenvoudige lokale bots. Er zijn geen andere mense
 | `W A S D` | Beweeg omhoog, links, omlaag en rechts, zonder Enter |
 | `E` / `F` / Spatie | In level 1: pakken/openen, wapen wisselen, aanvallen |
 | Pijlen / `U` / Tab / Enter | In demo 2: gericht aanvallen, upgrades, ranglijst, respawn |
+| `E` / `F` / Pijlen / Spatie / `V` | In demo 5: pakken, wisselen, aanvallen en bereikvoorbeeld |
 | `+` / `-` | Kies 8×8, 16×16 of 32×32 pixels; positie wordt hersteld |
 | `B` | Wissel tussen dambordachtergrond en egale grond |
 | `P` | Schakel de eenvoudige loopanimatie in/uit |
@@ -159,15 +209,15 @@ De ingebouwde held heeft twee beenposes tijdens beweging. De tekstpoppetjes hebb
 | 1 | ASCII-level | Het kleine tekstpoppetje, drie monstertypes, een kist en zichtbare uitrusting |
 | 2 | Free for All | Grote ASCII-wereld met vier bots, monsters, XP-upgrades en respawn |
 | 3 | Unicode-art | `█`, `▀`, `▄`, `▐`, `▌` en kleine gezichtselementen |
-| 4 | Gekleurde Unicode | RGB-held met haar, huid, turquoise jas, riem, broek en schoenen |
-| 5 | PNG → terminal | Echte PNG-decoder, alpha-compositie en twee pixels per cel |
+| 4 | ASCII-monstershowroom | 15 benoemde, herbruikbare tekstmonsters in een begaanbare galerij |
+| 5 | ASCII-wapenshowroom | 15 oppakbare wapens met verschillend bereik, schade en aanvalsvorm; onsterfelijke testgolem |
 | 6 | `█` + voorgrondkleur | Eén bronpixel per terminalcel |
 | 7 | Spatie + achtergrondkleur | Eén bronpixel per terminalcel |
 | 8 | `▀` + voor- en achtergrondkleur | Twee verticale bronpixels per terminalcel |
 | 9 | Vergelijking naast elkaar | Dezelfde sprite, achtergrond, invoer en positie met methodes 6–8 |
 | 0 | Pedit5-stijl | Amberkleurig lijnpoppetje met zwaard en schild op zwart, getekend met `▀` |
 
-Demo's 4 en 6 gebruiken bewust dezelfde blokrenderer: 4 toont de gekleurde voorbeeldheld, 6 is onderdeel van de rastervergelijking en kan een eigen PNG gebruiken. Demo's 5 en 8 delen de halfblokrenderer: PNG is de invoerbron; de manier van tekenen is daarvan onafhankelijk.
+Demo's 4 en 5 gebruiken uitsluitend ASCII-modellen met ANSI-kleuren. Demo's 6–9 vergelijken de pixelrenderers en kunnen een eigen PNG gebruiken: 6 toont voorgrondblokken, 7 achtergrondkleuren en 8 halfblokken. PNG is de invoerbron; de manier van tekenen is daarvan onafhankelijk.
 
 ### Pedit5-poppetje proberen
 
@@ -256,6 +306,8 @@ Stuur in een multiplayergame logische speltoestand/posities over het netwerk en 
 | `World` | Achtergrond, obstakels en botsingen |
 | `AsciiLevel` | Level 1: monsters, kist, oppakken, uitrusten en aanvallen |
 | `AsciiModel` | Herbruikbare modellen van alleen ASCII-tekstregels |
+| `ShowroomCatalog` | Vijftien monster- en wapenmodellen met eigenschappen voor hergebruik |
+| `Showroom` | Demo's 4 en 5: galerij, camera, inventaris, aanvalsmaskers en onsterfelijke testgolem |
 | `FreeForAll` | Gedeelde lokale FFA-wereld, bots, gevechten, XP, upgrades en respawn |
 | `FreeForAllView` | Camera, HUD, upgrademenu, ranglijst en respawnscherm |
 | `TerminalKeys` | CSI/SS3-pijltjestoetsen en afzonderlijke Escape herkennen |
@@ -271,3 +323,5 @@ De automatische tests controleren de drie pixelstrategieën, transparantie (ook 
 De leveltests lopen via echte routes naar wapens, kist en monsters op drie veldformaten. Ze controleren zichtbaar gedragen wapens, de eenmalige kistbeloning, wisselen van uitrusting, bereik en wachttijd van aanvallen, botsingen, ASCII-modeltekens en de koppeling met het hoofdmenu en resetten.
 
 De FFA-tests controleren onder meer de 70/30-verdeling inclusief uitgegeven XP, verlies van upgrades, spawnbeveiliging, de effecten van beweging/genezing/schade/HP, richtingsaanvallen en muren, monsterrespawn, behoud van voortgang bij resizing, cameragrenzen en bereikbare routes over de kaart. Een langere simulatie controleert dat bots vechten, upgrades kopen en geldige posities en statistieken behouden. De invoertests dekken zowel CSI- als SS3-pijlen, modifiers en een losse Esc.
+
+De showroomtests lopen echte routes naar alle 15 monsters en wapens, controleren zichtbare uitrusting en inventariswissels, gebruiken ieder wapen herhaaldelijk tegen de golem en toetsen richting, bereikgrenzen, aanvalsvormen, cooldowns, trefferkleur en herstel. Ze controleren ook ASCII-tekens, cameragrenzen, resizing, resetten en het negeren van spriteformaattoetsen.
