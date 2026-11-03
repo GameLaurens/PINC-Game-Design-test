@@ -80,6 +80,58 @@ Een venster van **80×24 tekencellen** is genoeg. Het level past zich bij het op
 
 Een nieuw tekstmodel toevoegen kan in [`AsciiLevel.java`](src/main/java/nl/pinc/terminallab/AsciiLevel.java): voeg een `MonsterType` toe met naam, leven, kleur en een `AsciiModel` met tekstregels. Voeg daarna een exemplaar met een positie toe aan het level. [`AsciiModel.java`](src/main/java/nl/pinc/terminallab/AsciiModel.java) tekent die regels en laat spaties transparant, zodat dezelfde aanpak ook voor nieuwe kisten en wapens bruikbaar is.
 
+## Demo 2: Free for All
+
+Start `.\run.cmd` en kies **2**. Demo 2 is vervangen door een **lokale Free for All met vier bots**, in dezelfde ASCII-stijl als level 1. Er is geen server of netwerk nodig. De bots zijn zichtbaar als `[BOT] Rook`, `[BOT] Nyx`, `[BOT] Bram` en `[BOT] Iris`. Ze delen jouw wereld, zoeken gevechten, vallen ook elkaar aan, verdienen XP, kopen upgrades en respawnen.
+
+De wereld is **240×100 tekencellen**. Een camera volgt jouw speler en toont hoogstens 100×28 cellen tegelijk, afhankelijk van de terminalgrootte. Je moet dus rondlopen om ruines, de oostelijke wildernis en de zuidelijke crypten te ontdekken. Vensterwijzigingen passen alleen het zicht aan: positie, monsters, XP en upgrades blijven behouden. Het minimum is 64×22 gebruikte terminalcellen; 100×32 is prettig.
+
+| Toets | Actie in Free for All |
+|---|---|
+| **WASD** | Bewegen |
+| **Pijl omhoog/omlaag/links/rechts** | Een zwaardaanval in die richting |
+| **U**, daarna **1–4** | Upgradeoverzicht openen en een upgrade kopen |
+| **U** | Upgradeoverzicht sluiten |
+| **Tab** | Ranglijst van jou en de vier bots tonen/sluiten |
+| **Enter** | Na een nederlaag opnieuw spawnen |
+| B / P | Achtergrond / loopanimatie wisselen |
+| **R** | Volledig nieuw spel; alle voortgang wissen |
+| **M** / Esc / **Q** | Hoofdmenu / hoofdmenu / afsluiten |
+
+In het upgrademenu betekenen 1–4 een aankoop; sluit het menu eerst met U als je met een cijfertoets naar een andere demo wilt. Gevechten lopen tijdens het upgrademenu en de ranglijst door. Je begint met een zichtbaar zwaard; het oppakken en wisselen van wapens blijft een onderdeel van level 1.
+
+### Monsters en upgrades
+
+Er zijn twintig monsters verspreid over de kaart. Ze achtervolgen nabije strijders en slaan terug. Monsters geven bij een nederlaag vaste XP en respawnen na ongeveer twaalf seconden.
+
+| Monster | HP | Schade | XP |
+|---|---:|---:|---:|
+| Slijm | 10 | 2 | **10** |
+| Goblin | 18 | 4 | 20 |
+| Skelet | 28 | 6 | 35 |
+| Ogre | 45 | 9 | 60 |
+
+Je begint met 30 HP en 5 schade. Iedere upgrade heeft maximaal vijf niveaus. De eerste aankoop per eigenschap kost 10 XP, de tweede 20, vervolgens 30, 40 en 50 XP.
+
+| Keuze in U-menu | Eigenschap | Effect per niveau |
+|---|---|---|
+| 1 | Maximale HP | +10 maximale en huidige HP |
+| 2 | Genezing | Korter interval: 1 HP per `2 / (niveau + 1)` seconden |
+| 3 | Bewegingssnelheid | 20 ms minder wachttijd per stap; van 140 tot minimaal 40 ms |
+| 4 | Schade | +3 schade per treffer |
+
+Genezing begint drie seconden na de laatste treffer. Simulatieticks ronden de genezingsmomenten iets af. Lopen werkt op losse toetsen en de toetsherhaling van het besturingssysteem; de werkelijke snelheid hangt ook van die herhaling af. Een zwaardaanval heeft een cooldown van 350 ms en raakt alleen een tegenstander in de gekozen richting, binnen vier cellen en zonder muur ertussen.
+
+### XP-verdeling en respawn
+
+De HUD toont **totaal XP** en **vrije XP**. Kopen verlaagt alleen vrije XP: uitgegeven XP blijft meetellen in het totaal voor PvP.
+
+Bij het verslaan van een andere strijder gaat **70% van diens totale XP** naar de winnaar. De verliezer verliest alle gekochte upgrades en houdt **30% als volledig besteedbare startbonus**. Bijvoorbeeld: 100 totaal XP, waarvan 80 uitgegeven, levert nog steeds 70 XP voor de winnaar en 30 vrije XP bij de respawn op. Bij ondeelbare aantallen wordt de 70%-beloning naar beneden afgerond en gaat de rest naar de verliezer, zodat er geen XP bijkomt door afronding.
+
+Na jouw nederlaag druk je **Enter** om op een verspreide vrije positie opnieuw te verschijnen, met 30 HP en drie seconden bescherming. Bots respawnen automatisch na vijf seconden. Als een monster jou verslaat, vervallen ook alle upgrades en blijft dezelfde 30%-startbonus over; de overige XP verdwijnt omdat er geen winnende speler is.
+
+Dit is een proefopstelling met eenvoudige lokale bots. Er zijn geen andere menselijke spelers verbonden en er wordt niets opgeslagen na afsluiten of R. De FFA-simulatie staat in [`FreeForAll.java`](src/main/java/nl/pinc/terminallab/FreeForAll.java), de camera/HUD/menu's in [`FreeForAllView.java`](src/main/java/nl/pinc/terminallab/FreeForAllView.java). [`TerminalKeys.java`](src/main/java/nl/pinc/terminallab/TerminalKeys.java) voegt de escape-bytes van pijltjestoetsen samen, zodat een aanval niet per ongeluk als Esc of als WASD wordt verwerkt.
+
 ## Bediening
 
 | Toets | Actie |
@@ -88,6 +140,7 @@ Een nieuw tekstmodel toevoegen kan in [`AsciiLevel.java`](src/main/java/nl/pinc/
 | `0` | Open de pedit5-variant: amber avonturier met zwaard en schild |
 | `W A S D` | Beweeg omhoog, links, omlaag en rechts, zonder Enter |
 | `E` / `F` / Spatie | In level 1: pakken/openen, wapen wisselen, aanvallen |
+| Pijlen / `U` / Tab / Enter | In demo 2: gericht aanvallen, upgrades, ranglijst, respawn |
 | `+` / `-` | Kies 8×8, 16×16 of 32×32 pixels; positie wordt hersteld |
 | `B` | Wissel tussen dambordachtergrond en egale grond |
 | `P` | Schakel de eenvoudige loopanimatie in/uit |
@@ -104,7 +157,7 @@ De ingebouwde held heeft twee beenposes tijdens beweging. De tekstpoppetjes hebb
 | Menu | Techniek | Wat je ziet |
 |---|---|---|
 | 1 | ASCII-level | Het kleine tekstpoppetje, drie monstertypes, een kist en zichtbare uitrusting |
-| 2 | Gedetailleerde ASCII | Gezicht, jas, armen en schoenen over meerdere regels |
+| 2 | Free for All | Grote ASCII-wereld met vier bots, monsters, XP-upgrades en respawn |
 | 3 | Unicode-art | `█`, `▀`, `▄`, `▐`, `▌` en kleine gezichtselementen |
 | 4 | Gekleurde Unicode | RGB-held met haar, huid, turquoise jas, riem, broek en schoenen |
 | 5 | PNG → terminal | Echte PNG-decoder, alpha-compositie en twee pixels per cel |
@@ -203,6 +256,9 @@ Stuur in een multiplayergame logische speltoestand/posities over het netwerk en 
 | `World` | Achtergrond, obstakels en botsingen |
 | `AsciiLevel` | Level 1: monsters, kist, oppakken, uitrusten en aanvallen |
 | `AsciiModel` | Herbruikbare modellen van alleen ASCII-tekstregels |
+| `FreeForAll` | Gedeelde lokale FFA-wereld, bots, gevechten, XP, upgrades en respawn |
+| `FreeForAllView` | Camera, HUD, upgrademenu, ranglijst en respawnscherm |
+| `TerminalKeys` | CSI/SS3-pijltjestoetsen en afzonderlijke Escape herkennen |
 
 ```powershell
 mvn test
@@ -213,3 +269,5 @@ mvn '-Dmaven.repo.local=.cache/maven' test
 De automatische tests controleren de drie pixelstrategieën, transparantie (ook gedeeltelijk en bij oneven hoogtes), PNG-decoding, afmetingen/aspectratio, ongeldige invoer, clipping, obstakels, schermverschillen zonder wisactie en beweging in alle tien demo's op alle drie formaten. Voor het pedit5-personage controleren ze ook de amberkleur, transparante gaten, stabiele bovenlichaamcontouren en verschillende beenposes. Ze vereisen geen echte terminal. De interactieve Windows-controle moet daarnaast de native invoer en herstelinstellingen toetsen: start de JAR, kies een demo zonder Enter, beweeg met WASD, vergelijk 6/7/8/9, probeer 0, wissel formaat, keer terug naar het menu en sluit af met Q of Ctrl+C.
 
 De leveltests lopen via echte routes naar wapens, kist en monsters op drie veldformaten. Ze controleren zichtbaar gedragen wapens, de eenmalige kistbeloning, wisselen van uitrusting, bereik en wachttijd van aanvallen, botsingen, ASCII-modeltekens en de koppeling met het hoofdmenu en resetten.
+
+De FFA-tests controleren onder meer de 70/30-verdeling inclusief uitgegeven XP, verlies van upgrades, spawnbeveiliging, de effecten van beweging/genezing/schade/HP, richtingsaanvallen en muren, monsterrespawn, behoud van voortgang bij resizing, cameragrenzen en bereikbare routes over de kaart. Een langere simulatie controleert dat bots vechten, upgrades kopen en geldige posities en statistieken behouden. De invoertests dekken zowel CSI- als SS3-pijlen, modifiers en een losse Esc.

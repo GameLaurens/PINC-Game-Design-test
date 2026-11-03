@@ -6,7 +6,7 @@ import org.jline.utils.NonBlockingReader;
 
 public final class Main {
     private static final String[] MODES = {
-        "ASCII - level 1: monsters, kist en wapens", "ASCII - gedetailleerd", "Unicode - vormen en blokken",
+        "ASCII - level 1: monsters, kist en wapens", "Free for All - grote ASCII-wereld met bots", "Unicode - vormen en blokken",
         "ANSI True Color - gekleurd poppetje", "PNG - transparante terminalpixels",
         "ANSI - een pixel per voorgrondblok", "ANSI - een pixel per achtergrond",
         "ANSI - twee verticale pixels per teken", "Vergelijk de drie ANSI-methodes",
@@ -22,6 +22,7 @@ public final class Main {
     private int sceneWidth, sceneHeight, actorWidth, actorHeight;
     private World world;
     private AsciiLevel asciiLevel;
+    private FreeForAllView freeForAll;
 
     Main(Sprite custom, String source, int size) throws IOException {
         this.custom = custom; this.source = source;
@@ -62,6 +63,7 @@ public final class Main {
         System.out.println("java --enable-native-access=ALL-UNNAMED -jar target/terminal-sprite-lab.jar [--png pad.png] [--size 8|16|32]");
         System.out.println("1-9: demo | 0: pedit5-stijl | WASD: bewegen | +/-: formaat | B: achtergrond | P: animatie | R: positie | M/Esc: menu | Q: stop");
         System.out.println("Level 1: E pakken/kist openen | F wapen wisselen | Spatie aanvallen | R level opnieuw");
+        System.out.println("Demo 2 FFA: WASD lopen | pijlen aanvallen | U upgrades (1-4) | Tab ranglijst | Enter respawn");
     }
     private void run() throws IOException {
         try (TerminalSession session = new TerminalSession()) {
@@ -69,7 +71,9 @@ public final class Main {
             AnsiDisplay display = new AnsiDisplay(terminal.writer());
             long statsAt = System.nanoTime(), bytesAt = 0;
             String stats = "";
+            TerminalKeys keys = new TerminalKeys();
             while (running && !session.interrupted()) {
+                for (int expired : keys.expire(System.nanoTime())) handle(expired);
                 // Leave the final column and row unused: never trigger terminal autowrap/scroll.
                 int width = Math.max(1, Math.min(terminal.getWidth() - 1, 240));
                 int height = Math.max(1, Math.min(terminal.getHeight() - 1, 100));
@@ -81,13 +85,13 @@ public final class Main {
                 display.render(mode == 0 ? menu(width, height) : demo(width, height, now, stats));
                 int key = terminal.reader().read(33);
                 if (key == -1) break;
-                if (key != NonBlockingReader.READ_EXPIRED) handle(key);
+                if (key != NonBlockingReader.READ_EXPIRED) for (int decoded : keys.accept(key, System.nanoTime())) handle(decoded);
                 // Bound work per frame, even when a terminal pastes a large amount of text.
                 for (int count = 0; count < 16 && running; count++) {
                     int extra = terminal.reader().read(1);
                     if (extra == NonBlockingReader.READ_EXPIRED) break;
                     if (extra == -1) { running = false; break; }
-                    handle(extra);
+                    for (int decoded : keys.accept(extra, System.nanoTime())) handle(decoded);
                 }
             }
         }
@@ -105,7 +109,7 @@ public final class Main {
         c.text(2, 22, "Vergelijking 16px: 96x32 aanbevolen; 32px: 132x48.");
         return c;
     }
-    private TextArt art() { return switch (mode) { case 1 -> TextArt.ASCII; case 2 -> TextArt.DETAIL; case 3 -> TextArt.UNICODE; default -> null; }; }
+    private TextArt art() { return switch (mode) { case 1 -> TextArt.ASCII; case 3 -> TextArt.UNICODE; default -> null; }; }
     private PixelRenderer renderer() {
         return switch (mode) {
             case 4, 6 -> PixelRenderer.FULL_BLOCK;
@@ -119,6 +123,10 @@ public final class Main {
     }
     Canvas demo(int width, int height, long now, String stats) {
         if (mode == 1) return asciiLevel(width, height, now, stats);
+        if (mode == 2) {
+            if (freeForAll == null) freeForAll = new FreeForAllView(now);
+            return freeForAll.frame(width, height, now, checker, animate);
+        }
         Canvas c = new Canvas(width, height);
         TextArt art = art();
         Sprite sprite = currentSprite();
@@ -189,6 +197,7 @@ public final class Main {
     void handle(int input) {
         int key = Character.toLowerCase(input);
         if (key == 'q' || key == 3 || key == 4) { running = false; return; }
+        if (mode == 2 && freeForAll != null && freeForAll.handle(input, System.nanoTime())) return;
         if (key >= '1' && key <= '9') { mode = key - '0'; reset(); return; }
         switch (key) {
             case 'e' -> { if (mode == 1 && asciiLevel != null) asciiLevel.interact(); }
@@ -196,8 +205,8 @@ public final class Main {
             case ' ' -> { if (mode == 1 && asciiLevel != null) asciiLevel.attack(System.nanoTime()); }
             case '0' -> { mode = 10; checker = false; reset(); }
             case 'm', 27 -> { mode = 0; world = null; }
-            case '+', '=' -> { if (mode != 1) { sizeIndex = Math.min(2, sizeIndex + 1); reset(); } }
-            case '-', '_' -> { if (mode != 1) { sizeIndex = Math.max(0, sizeIndex - 1); reset(); } }
+            case '+', '=' -> { if (mode != 1 && mode != 2) { sizeIndex = Math.min(2, sizeIndex + 1); reset(); } }
+            case '-', '_' -> { if (mode != 1 && mode != 2) { sizeIndex = Math.max(0, sizeIndex - 1); reset(); } }
             case 'b' -> checker = !checker;
             case 'p' -> animate = !animate;
             case 'r' -> reset();
@@ -208,7 +217,7 @@ public final class Main {
             default -> { }
         }
     }
-    private void reset() { x = 2; y = 2; steps = 0; lastMovement = 0; world = null; asciiLevel = null; }
+    private void reset() { x = 2; y = 2; steps = 0; lastMovement = 0; world = null; asciiLevel = null; freeForAll = null; }
     private void move(int dx, int dy) {
         if (mode == 1) {
             if (asciiLevel != null) asciiLevel.move(dx, dy, System.nanoTime());
