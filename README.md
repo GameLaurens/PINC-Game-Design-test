@@ -23,6 +23,14 @@ De interface benut de beschikbare terminalafmetingen; de oude limiet van 240×10
 
 **Demo selecteren:** de nummers in de technische beschrijvingen hieronder verwijzen naar de gamekeuze bij **Nieuwe game aanmaken**. Cijfertoetsen wisselen tijdens het spelen niet meer van demo; **1–4** zijn gereserveerd voor FFA-upgrades. De amber pedit5-demo is nu de tiende keuze.
 
+## Diagonaal lopen en tegelijk aanvallen
+
+Gebruik een recente **Windows Terminal**, met PowerShell of cmd. Houd **W+A**, **W+D**, **S+A** of **S+D** ingedrukt om diagonaal te lopen. Dit werkt in alle tien demo's. Je kunt ondertussen in Free for All en het Weapon Lab een **pijltjestoets vasthouden om te blijven aanvallen**. In level 1 gebruik je tijdens het lopen **Spatie** voor de bestaande aanval.
+
+Loopinvoer en aanvallen hebben aparte timers: aanvallen onderbreekt het lopen niet. De pijlen richten alleen **omhoog, omlaag, links of rechts**. Als je twee aanvalspijlen vasthoudt, wint de laatst ingedrukte; er ontstaat geen diagonale aanval. Laat je die los, dan wordt de andere nog ingedrukte pijl weer gebruikt. Tegengestelde looptoetsen heffen elkaar op. Diagonale stappen krijgen een aangepaste wachttijd zodat diagonaal lopen geen snelheidsbonus geeft; langs een geblokkeerde hoek glijd je over een vrije as.
+
+Toets-los-events stoppen de betreffende actie. Tijdens chat en menu's worden ingedrukte speltoetsen onderdrukt; laat ze daarna los en druk opnieuw om verder te lopen. Focusverlies wist de actieve toetsen. Op andere terminalbackends blijft de eerdere bediening met losse toetsaanslagen beschikbaar; echt gelijktijdig vasthouden gebruikt het Windows-console-eventpad.
+
 ## Starten in PowerShell
 
 Installeer een **JDK 17 of nieuwer** en **Maven 3.9+** en zorg dat `java`, `javac` en `mvn` op PATH staan. Open PowerShell in Windows Terminal in deze projectmap:
@@ -141,7 +149,7 @@ Je begint met 30 HP en 5 schade. Iedere upgrade heeft maximaal vijf niveaus. De 
 | 3 | Bewegingssnelheid | 20 ms minder wachttijd per stap; van 140 tot minimaal 40 ms |
 | 4 | Schade | +3 schade per treffer |
 
-Genezing begint drie seconden na de laatste treffer. Simulatieticks ronden de genezingsmomenten iets af. Lopen werkt op losse toetsen en de toetsherhaling van het besturingssysteem; de werkelijke snelheid hangt ook van die herhaling af. Een zwaardaanval heeft een cooldown van 350 ms en raakt alleen een tegenstander in de gekozen richting, binnen vier cellen en zonder muur ertussen.
+Genezing begint drie seconden na de laatste treffer. Simulatieticks ronden de genezingsmomenten iets af. Op Windows wordt de toestand van ingedrukte toetsen per frame verwerkt; lopen hangt daar niet meer af van de toetsherhaling van het besturingssysteem. Een zwaardaanval heeft een eigen cooldown van 350 ms en raakt alleen een tegenstander in de gekozen rechte richting, binnen vier cellen en zonder muur ertussen. Tijdens die cooldown kun je blijven lopen.
 
 ### XP-verdeling en respawn
 
@@ -224,7 +232,7 @@ De wapenmodellen en eigenschappen staan in `ShowroomCatalog.Weapon`; de showroom
 
 Alle demo's hebben een achtergrond, muren en bij voldoende ruimte enkele bruine obstakels. Botsingen gebruiken het **hele rechthoekige kader** van de weergave, ook de transparante randen. In de vergelijking bewegen de drie exemplaren tegelijk en gebruiken ze hetzelfde grootste botsingskader. Daardoor blijven posities en obstakels gelijk, terwijl het verschil in hoogte zichtbaar blijft.
 
-De ingebouwde held heeft twee beenposes tijdens beweging. De tekstpoppetjes hebben ook twee poses. Een eigen PNG blijft ongewijzigd; er is geen aanname over waar de benen zitten. Beweging gebeurt per ontvangen teken. Een ingedrukte toets gebruikt de herhaling van het besturingssysteem; het programma ontvangt geen betrouwbare key-up-events of gelijktijdige WASD-toestanden.
+De ingebouwde held heeft twee beenposes tijdens beweging. De tekstpoppetjes hebben ook twee poses. Een eigen PNG blijft ongewijzigd; er is geen aanname over waar de benen zitten. De Windows-backend bewaart key-down en key-up afzonderlijk en verwerkt alle ingedrukte WASD-toetsen en één aanvalspijl tegelijk. De overige backends behouden beweging per ontvangen teken.
 
 ## De tien demo's
 
@@ -284,6 +292,8 @@ Er is één initiële schermwisactie bij het openen. Beweging wist het scherm ni
 
 JLine schakelt de systeemterminal naar raw mode. De applicatie zet ook `ISIG` uit om Ctrl+C als invoerteken te verwerken, zodat afsluiten niet afhankelijk is van het doorgeven van een native consolesignaal. De `NonBlockingReader` leest tekens met een timeout, zodat toetsen, animatie en vensterwijzigingen in één lus verwerkt kunnen worden. De provider voert de platformafhankelijke consoleaanroepen uit. De Maven Shade-build neemt de serviceproviderregistratie en native resources mee in de uitvoerbare JAR.
 
+`GameWindowsTerminal` breidt de gepinde JNI-terminal uit en bewaart de [Windows-console-key-events](https://learn.microsoft.com/en-us/windows/console/key-event-record-str) voordat JLine ze naar tekens vertaalt. Er wordt alleen uit de normale console-inputbuffer gelezen; er is geen globale toetsenbordhook of polling van andere applicaties. `GameControls` combineert ingedrukte toetsen en bewaart korte toetsaanslagen tot het volgende frame. `Movement` behandelt acht looprichtingen en voorkomt het afsnijden van geblokkeerde hoeken. Aanvallen blijven de bestaande vier richtingen gebruiken. De adapter staat bewust in het JLine-package vanwege de package-private constructor in versie 3.30.17; controleer deze bij een library-upgrade.
+
 Zie de officiële [JLine Terminal-documentatie](https://jline.org/versions/3.x/docs/terminal/), [raw-mode-interface](https://github.com/jline/jline3/blob/jline-3.30.17/terminal/src/main/java/org/jline/terminal/Terminal.java) en [JNI-module](https://github.com/jline/jline3/blob/jline-3.30.17/terminal-jni/pom.xml). Deze versie heeft een eigen JNI-provider; oudere voorbeelden die uitsluitend JNA of Jansi noemen zijn daarvoor niet volledig.
 
 `TerminalSession` bewaart de originele attributen en herstelt die via `try-with-resources`, ook bij een fout. Een shutdown-hook probeert hetzelfde bij JVM-afsluiting. Kleuren worden gereset, de cursor wordt zichtbaar en het oorspronkelijke scherm keert terug. Een geforceerd beëindigd proces, stroomuitval of een gecrashte terminal kan geen Java-cleanup uitvoeren.
@@ -313,7 +323,7 @@ Voor een game die zich op Windows Terminal en vergelijkbare moderne terminals ri
 
 Dit is een ontwerpaanbeveling op basis van pixelverhoudingen, celgebruik en deze proefopstelling, geen gemeten multiplayerbenchmark. Halveren van het aantal cellen halveert niet automatisch het aantal bytes: halfblokken hebben vaak twee kleurwisselingen per cel, en compressie en het aantal gewijzigde cellen tellen mee. Vergelijk in demo 9 de vormen en test dezelfde bewegingen afzonderlijk in 6–8 met de byte-indicator. Terminal, hardware en verbinding bepalen de werkelijke grens.
 
-Stuur in een multiplayergame logische speltoestand/posities over het netwerk en laat iedere client lokaal renderen. Gebruik een vaste simulatietick, interpolatie en een clientbuffer voor gewijzigde cellen. Vermijd volledige PNG's of complete ANSI-schermen per netwerktick. De huidige demo bevat geen netwerklaag en geen betrouwbare toets-los-events. Voor gelijktijdige richtingen en vloeiende key-down/key-up-besturing moet je een expliciet Windows-console-eventpad toevoegen of een invoermodel kiezen dat op losse toetsaanslagen is ontworpen.
+Stuur in een multiplayergame logische speltoestand/posities over het netwerk en laat iedere client lokaal renderen. Gebruik een vaste simulatietick, interpolatie en een clientbuffer voor gewijzigde cellen. Vermijd volledige PNG's of complete ANSI-schermen per netwerktick. De huidige demo bevat geen netwerklaag. Gelijktijdige richtingen en key-down/key-up-besturing zijn nu beschikbaar via het Windows-console-eventpad; andere backends gebruiken nog losse toetsaanslagen.
 
 ## Opbouw en controle
 
@@ -340,6 +350,8 @@ Stuur in een multiplayergame logische speltoestand/posities over het netwerk en 
 | `FreeForAll` | Gedeelde lokale FFA-wereld, bots, gevechten, XP, upgrades en respawn |
 | `FreeForAllView` | Camera, HUD, upgrademenu, ranglijst en respawnscherm |
 | `TerminalKeys` | CSI/SS3-pijltjestoetsen en afzonderlijke Escape herkennen |
+| `GameControls` / `Movement` | Ingedrukte toetsen, acht looprichtingen, hoekbotsingen en één rechte aanval tegelijk |
+| `GameWindowsTerminal` | JLine JNI-adapter voor console-key-down/key-up en focusverlies |
 
 ```powershell
 mvn test
@@ -352,6 +364,8 @@ De automatische tests controleren de drie pixelstrategieën, transparantie (ook 
 `GameMenuTest` controleert de volledige route naar alle tien demo's, gereedmelding voor het starten, voorbeeldsaves en kamers, agentprofielen, terugnavigatie, directe upgrades en vensterverkleining. Chatcontroles toetsen kanaalscheiding, wissen en annuleren, de invoerlimiet en het afvangen van bewegings-, menu- en afsluittoetsen.
 
 `FullscreenTest` controleert opgaande en neergaande logo-animatie, de vaste startprompt, daadwerkelijk gevulde speelvelden in alle tien demo's tot 320×120 cellen, extra zicht bij vergroten, behoud van voortgang bij resizing en de koppeling van leaderboard en upgradebalken met de simulatie.
+
+`MovementInputTest` controleert alle vier diagonalen, bewegen en aanvallen tegelijk, afzonderlijk loslaten, korte taps, conflicterende toetsen, focusverlies, chat/menu-onderdrukking, hoeken en wall sliding, compensatie van diagonale loopsnelheid en onafhankelijke aanvalscooldowns. Een native ConPTY-controle heeft daarnaast W+D+pijl rechts als gelijktijdig ingedrukt geverifieerd, gevolgd door het stoppen van alle acties na hun key-up-events.
 
 De leveltests lopen via echte routes naar wapens, kist en monsters op drie veldformaten. Ze controleren zichtbaar gedragen wapens, de eenmalige kistbeloning, wisselen van uitrusting, bereik en wachttijd van aanvallen, botsingen, ASCII-modeltekens en de koppeling met het hoofdmenu en resetten.
 

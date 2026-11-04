@@ -91,8 +91,9 @@ public final class AsciiLevel {
                 .overlaps(px, py, PLAYER_WIDTH, PLAYER_HEIGHT));
     }
     public boolean move(int dx, int dy, long now) {
-        if (Math.abs(dx) + Math.abs(dy) != 1 || !canPlace(x + dx, y + dy)) return false;
-        x += dx; y += dy; steps++; lastMove = now;
+        var step = Movement.resolve(x, y, dx, dy, this::canPlace);
+        if (!step.moved()) return false;
+        x += step.dx(); y += step.dy(); steps++; lastMove = now;
         return true;
     }
     private int distance(int ox, int oy, int ow, int oh) {

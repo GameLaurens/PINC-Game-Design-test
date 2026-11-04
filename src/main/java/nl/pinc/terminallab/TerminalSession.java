@@ -5,6 +5,7 @@ import java.nio.charset.StandardCharsets;
 import org.jline.terminal.Attributes;
 import org.jline.terminal.Terminal;
 import org.jline.terminal.TerminalBuilder;
+import org.jline.terminal.impl.jni.win.GameWindowsTerminal;
 
 /** Restores raw input, colors, cursor and the original screen on all normal exit paths. */
 public final class TerminalSession implements AutoCloseable {
@@ -13,8 +14,17 @@ public final class TerminalSession implements AutoCloseable {
     private final Thread shutdownHook;
     private boolean closed;
     private volatile boolean interrupted;
+    private final GameControls controls = new GameControls();
+    private final boolean simultaneousInput;
     public TerminalSession() throws IOException {
-        terminal = TerminalBuilder.builder().system(true).dumb(false).encoding(StandardCharsets.UTF_8).build();
+        Terminal nativeTerminal = null;
+        if (System.getProperty("os.name", "").startsWith("Windows") && !"dumb".equals(System.getenv("TERM"))) {
+            try { nativeTerminal = GameWindowsTerminal.open(controls); }
+            catch (IOException | LinkageError e) { /* Retain character input on unsupported console hosts. */ }
+        }
+        simultaneousInput = nativeTerminal != null;
+        terminal = nativeTerminal != null ? nativeTerminal
+            : TerminalBuilder.builder().system(true).dumb(false).encoding(StandardCharsets.UTF_8).build();
         // TERM=dumb explicitly forces JLine's line-based fallback, even with dumb(false).
         if (terminal.getType().startsWith("dumb") || terminal.getWidth() < 1 || terminal.getHeight() < 1) {
             terminal.close();
@@ -30,12 +40,15 @@ public final class TerminalSession implements AutoCloseable {
             Attributes raw = terminal.getAttributes();
             raw.setLocalFlag(Attributes.LocalFlag.ISIG, false);
             terminal.setAttributes(raw);
+            if (simultaneousInput) terminal.resume();
             terminal.writer().print("\033[?1049h\033[0m\033[?25l\033[2J\033[H");
             terminal.writer().flush();
         } catch (RuntimeException e) { close(); throw e; }
     }
     public Terminal terminal() { return terminal; }
     public boolean interrupted() { return interrupted; }
+    public GameControls controls() { return controls; }
+    public boolean simultaneousInput() { return simultaneousInput; }
     private synchronized void restore() {
         if (closed) return;
         closed = true;

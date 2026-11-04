@@ -126,10 +126,16 @@ public final class FreeForAll {
                 && new World.Rect(other.x, other.y, other.width(), other.height()).overlaps(x, y, actor.width(), actor.height()));
     }
     public boolean move(Actor actor, Direction direction, long now) {
+        return move(actor, direction.dx, direction.dy, now);
+    }
+    public boolean move(Actor actor, int dx, int dy, long now) {
         if (!actor.alive() || now < actor.nextMove) return false;
-        actor.facing = direction;
-        if (!canPlace(actor, actor.x + direction.dx, actor.y + direction.dy)) return false;
-        actor.x += direction.dx; actor.y += direction.dy; actor.nextMove = now + actor.moveDelay();
+        if (Math.abs(dx) > 1 || Math.abs(dy) > 1 || (dx == 0 && dy == 0)) return false;
+        actor.facing = dx != 0 ? (dx < 0 ? Direction.LEFT : Direction.RIGHT) : (dy < 0 ? Direction.UP : Direction.DOWN);
+        var step = Movement.resolve(actor.x, actor.y, dx, dy, (px, py) -> canPlace(actor, px, py));
+        if (!step.moved()) return false;
+        actor.x += step.dx(); actor.y += step.dy();
+        actor.nextMove = now + Movement.delay(actor.moveDelay(), step.dx(), step.dy());
         actor.lastMove = now; actor.steps++;
         return true;
     }

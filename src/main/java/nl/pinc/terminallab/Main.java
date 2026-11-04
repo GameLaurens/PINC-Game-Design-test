@@ -26,6 +26,8 @@ public final class Main {
     private Showroom showroom;
     private final GameMenu menus = new GameMenu();
     private GameChat chat = new GameChat();
+    private GameControls realtimeControls;
+    private long nextControlMove;
 
     Main(Sprite custom, String source, int size) throws IOException {
         this.custom = custom; this.source = source;
@@ -67,7 +69,8 @@ public final class Main {
         System.out.println("Startscherm: elke toets | Menu's: WASD/pijlen + Enter | Esc: terug");
         System.out.println("Nieuwe game: kies uit tien demo's en single-/multiplayer; meld je gereed in de lobby en start.");
         System.out.println("Spel: T global chat | Y teamchat | Esc lobby | M hoofdmenu | Q stop | Ctrl+C/D altijd afsluiten");
-        System.out.println("WASD: bewegen | +/-: formaat | B: achtergrond | P: animatie | R: opnieuw");
+        System.out.println("WASD vasthouden/combineren: ook diagonaal lopen | Pijlen: tegelijk recht aanvallen (Windows Terminal)");
+        System.out.println("+/-: formaat | B: achtergrond | P: animatie | R: opnieuw");
         System.out.println("Level 1: E pakken/kist openen | F wapen wisselen | Spatie aanvallen | R level opnieuw");
         System.out.println("Demo 2 FFA: WASD lopen | pijlen aanvallen | 1-4 direct upgraden | U overzicht | Tab ranglijst | Enter respawn");
         System.out.println("Servers, saves en agentcode zijn UI-prototypes; chat is lokaal. Schermvullend speelveld; zijpanelen vanaf 80x22.");
@@ -75,6 +78,7 @@ public final class Main {
     }
     private void run() throws IOException {
         try (TerminalSession session = new TerminalSession()) {
+            useControls(session.simultaneousInput() ? session.controls() : null);
             var terminal = session.terminal();
             AnsiDisplay display = new AnsiDisplay(terminal.writer());
             long statsAt = System.nanoTime(), bytesAt = 0;
@@ -90,6 +94,7 @@ public final class Main {
                     stats = "ANSI UTF-8 bytes/s: " + (long) ((display.totalBytes() - bytesAt) * 1_000_000_000.0 / (now - statsAt));
                     statsAt = now; bytesAt = display.totalBytes();
                 }
+                updateControls(now);
                 display.render(frame(width, height, now, stats));
                 int key = terminal.reader().read(33);
                 if (key == -1) break;
@@ -262,6 +267,15 @@ public final class Main {
         return c;
     }
     void handle(int input) {
+        boolean wasChat = chat.editing();
+        try { handleKey(input); }
+        finally {
+            if (realtimeControls != null && (wasChat || chat.editing() || menus.screen() != GameMenu.Screen.PLAY)) {
+                realtimeControls.suppressHeld(); nextControlMove = 0;
+            }
+        }
+    }
+    private void handleKey(int input) {
         int key = Character.toLowerCase(input);
         if (key == 3 || key == 4) { running = false; return; }
         if (menus.screen() != GameMenu.Screen.PLAY) {
@@ -272,6 +286,7 @@ public final class Main {
             return;
         }
         if (chat.handle(input)) return;
+        if (realtimeControls != null && GameControls.continuousKey(input)) return;
         if (key == 'q') { running = false; return; }
         if (key == 27) { menus.lobby(); return; }
         if (key == 'm') { menus.home(); return; }
@@ -293,19 +308,61 @@ public final class Main {
             default -> { }
         }
     }
+    void useControls(GameControls controls) {
+        realtimeControls = controls; nextControlMove = 0;
+        if (controls != null) controls.suppressHeld();
+    }
+    void updateControls(long now) {
+        if (realtimeControls == null) return;
+        if (menus.screen() != GameMenu.Screen.PLAY || chat.editing()) {
+            realtimeControls.suppressHeld(); nextControlMove = 0; return;
+        }
+        var held = realtimeControls.state();
+        if (held.dx() != 0 || held.dy() != 0) {
+            if (mode == 2 || now >= nextControlMove) {
+                move(held.dx(), held.dy(), now);
+                nextControlMove = now + Movement.delay(140_000_000L, held.dx(), held.dy());
+            }
+        } else nextControlMove = 0;
+        // Attack has its own cooldown and never consumes or changes the movement keys.
+        if (held.attack() != 0) {
+            if (mode == 2 && freeForAll != null) freeForAll.handle(held.attack(), now);
+            else if (mode == 5 && showroom != null) showroom.handle(held.attack(), now);
+        } else if (held.space()) {
+            if (mode == 1 && asciiLevel != null) asciiLevel.attack(now);
+            else if (mode == 5 && showroom != null) showroom.handle(' ', now);
+        }
+    }
     void openDemo(int selectedMode) {
         if (selectedMode < 1 || selectedMode > 10) throw new IllegalArgumentException("Onbekende demo");
         mode = selectedMode; menus.playing(mode); chat = new GameChat();
         if (mode == 10) checker = false;
         reset();
     }
-    private void reset() { x = 2; y = 2; steps = 0; lastMovement = 0; world = null; asciiLevel = null; freeForAll = null; showroom = null; }
+    private void reset() {
+        x = 2; y = 2; steps = 0; lastMovement = 0; nextControlMove = 0;
+        world = null; asciiLevel = null; freeForAll = null; showroom = null;
+        if (realtimeControls != null) realtimeControls.suppressHeld();
+    }
     private void move(int dx, int dy) {
+        move(dx, dy, System.nanoTime());
+    }
+    private void move(int dx, int dy, long now) {
         if (mode == 1) {
-            if (asciiLevel != null) asciiLevel.move(dx, dy, System.nanoTime());
+            if (asciiLevel != null) asciiLevel.move(dx, dy, now);
             return;
         }
-        if (mode == 0 || world == null || !world.canPlace(x + dx, y + dy, actorWidth, actorHeight)) return;
-        x += dx; y += dy; steps++; lastMovement = System.nanoTime();
+        if (mode == 2) {
+            if (freeForAll != null) freeForAll.world().move(freeForAll.world().player(), dx, dy, now);
+            return;
+        }
+        if (mode == 4 || mode == 5) {
+            if (showroom != null) showroom.move(dx, dy, now);
+            return;
+        }
+        if (mode == 0 || world == null) return;
+        var step = Movement.resolve(x, y, dx, dy, (px, py) -> world.canPlace(px, py, actorWidth, actorHeight));
+        if (!step.moved()) return;
+        x += step.dx(); y += step.dy(); steps++; lastMovement = now;
     }
 }

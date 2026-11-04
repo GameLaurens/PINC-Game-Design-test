@@ -57,9 +57,14 @@ public final class Showroom {
             .overlaps(px, py, PLAYER_WIDTH, PLAYER_HEIGHT));
     }
     public boolean move(Direction direction, long now) {
-        facing = direction;
-        if (!canPlace(x + direction.dx, y + direction.dy)) return false;
-        x += direction.dx; y += direction.dy; steps++; lastMove = now;
+        return move(direction.dx, direction.dy, now);
+    }
+    public boolean move(int dx, int dy, long now) {
+        if (Math.abs(dx) > 1 || Math.abs(dy) > 1 || (dx == 0 && dy == 0)) return false;
+        facing = dx != 0 ? (dx < 0 ? Direction.LEFT : Direction.RIGHT) : (dy < 0 ? Direction.UP : Direction.DOWN);
+        var step = Movement.resolve(x, y, dx, dy, this::canPlace);
+        if (!step.moved()) return false;
+        x += step.dx(); y += step.dy(); steps++; lastMove = now;
         return true;
     }
     private int gap(Exhibit e) {
