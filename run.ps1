@@ -6,7 +6,13 @@ param(
 $ErrorActionPreference = 'Stop'
 Push-Location $PSScriptRoot
 try {
-    if ($Build -or !(Test-Path -LiteralPath 'target/terminal-sprite-lab.jar')) {
+    $needsBuild = $Build -or !(Test-Path -LiteralPath 'target/terminal-sprite-lab.jar')
+    if (!$needsBuild) {
+        $jarFile = Get-Item -LiteralPath 'target/terminal-sprite-lab.jar'
+        $buildInputs = @(Get-Item -LiteralPath 'pom.xml') + @(Get-ChildItem -LiteralPath 'src' -Recurse -File)
+        $needsBuild = @($buildInputs | Where-Object { $_.LastWriteTimeUtc -gt $jarFile.LastWriteTimeUtc }).Count -gt 0
+    }
+    if ($needsBuild) {
         & mvn -B "-Dmaven.repo.local=$PSScriptRoot/.cache/maven" package
         if ($LASTEXITCODE -ne 0) { throw 'Bouwen mislukt.' }
     }

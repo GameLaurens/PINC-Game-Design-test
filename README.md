@@ -10,7 +10,7 @@ Installeer een **JDK 17 of nieuwer** en **Maven 3.9+** en zorg dat `java`, `java
 .\run.cmd
 ```
 
-Het script bouwt bij de eerste start, voert de tests uit en start de uitvoerbare JAR. Het werkt ook wanneer PowerShell het uitvoeren van `.ps1`-bestanden blokkeert. Maven downloadt dependencies naar `.cache/maven` in dit project; daarna is geen internet nodig. Na broncodewijzigingen:
+Het script bouwt bij de eerste start en automatisch wanneer bestanden in `src` of `pom.xml` nieuwer zijn dan de gebouwde JAR. Bij een build worden ook de tests uitgevoerd. Zo worden wijzigingen aan bijvoorbeeld `ShowroomCatalog.java` en nieuwe versies na een git pull meegenomen. Het werkt ook wanneer PowerShell het uitvoeren van `.ps1`-bestanden blokkeert. Maven downloadt dependencies naar `.cache/maven` in dit project; daarna is geen internet nodig. Handmatig opnieuw bouwen kan ook:
 
 ```powershell
 mvn '-Dmaven.repo.local=.cache/maven' package
@@ -133,6 +133,8 @@ Na jouw nederlaag druk je **Enter** om op een verspreide vrije positie opnieuw t
 Dit is een proefopstelling met eenvoudige lokale bots. Er zijn geen andere menselijke spelers verbonden en er wordt niets opgeslagen na afsluiten of R. De FFA-simulatie staat in [`FreeForAll.java`](src/main/java/nl/pinc/terminallab/FreeForAll.java), de camera/HUD/menu's in [`FreeForAllView.java`](src/main/java/nl/pinc/terminallab/FreeForAllView.java). [`TerminalKeys.java`](src/main/java/nl/pinc/terminallab/TerminalKeys.java) voegt de escape-bytes van pijltjestoetsen samen, zodat een aanval niet per ongeluk als Esc of als WASD wordt verwerkt.
 
 ## Demo 4: monstershowroom
+
+Sluit een al draaiende game met Q en start opnieuw met `.\run.cmd`. Kies **4** voor de monstershowroom of **5** voor de wapenshowroom. Als je nog het oude menu ziet, sluit dan ook die oude sessie: een draaiende Java-applicatie neemt broncodewijzigingen pas bij een nieuwe start over.
 
 Kies **4** voor een begaanbare galerij met **15 verschillende ASCII-monsters**: slijm, goblin, skelet, vleermuis, spin, spook, ork, trol, wolf, mimic, golem, slang, duiveltje, kever en draak. Iedere soort heeft een eigen tekstmodel, kleur, naam en korte beschrijving. De monsters staan stil en vallen je niet aan.
 
