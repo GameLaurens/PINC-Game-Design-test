@@ -20,6 +20,7 @@ public final class Showroom {
     private record Strike(Weapon weapon, Direction direction, int x, int y, long until) { }
 
     private final boolean weapons;
+    private int worldWidth = WIDTH, worldHeight;
     private final List<Exhibit> exhibits = new ArrayList<>();
     private final List<Weapon> inventory = new ArrayList<>();
     private int x = 3, y = 2, selected, steps, hits, lastDamage;
@@ -31,11 +32,12 @@ public final class Showroom {
 
     public Showroom(boolean weapons) {
         this.weapons = weapons;
+        worldHeight = weapons ? 58 : 44;
         for (int i = 0; i < 15; i++) exhibits.add(new Exhibit(i, 6 + (i % 5) * 24, 7 + (i / 5) * 12));
         message = weapons ? "Loop naar een wapen en druk E. Testmonster: (60,46), onder de rekken."
             : "15 ASCII-monsters: loop langs de modellen. De camera volgt je.";
     }
-    public int height() { return weapons ? 58 : 44; }
+    public int height() { return worldHeight; }
     public int playerX() { return x; }
     public int playerY() { return y; }
     public int hits() { return hits; }
@@ -47,7 +49,7 @@ public final class Showroom {
     public List<Exhibit> exhibits() { return List.copyOf(exhibits); }
 
     boolean canPlace(int px, int py) {
-        if (px < 1 || py < 1 || px + PLAYER_WIDTH >= WIDTH || py + PLAYER_HEIGHT >= height()) return false;
+        if (px < 1 || py < 1 || px + PLAYER_WIDTH >= worldWidth || py + PLAYER_HEIGHT >= height()) return false;
         if (weapons) return !new World.Rect(TARGET_X, TARGET_Y, Monster.GOLEM.model.width(), Monster.GOLEM.model.height())
             .overlaps(px, py, PLAYER_WIDTH, PLAYER_HEIGHT);
         return exhibits.stream().noneMatch(e -> new World.Rect(e.x, e.y,
@@ -141,8 +143,8 @@ public final class Showroom {
         return true;
     }
     public Camera camera(int width, int height) {
-        int w = Math.min(WIDTH, Math.max(1, width)), h = Math.min(height(), Math.max(1, height));
-        return new Camera(Math.max(0, Math.min(WIDTH - w, x + PLAYER_WIDTH / 2 - w / 2)),
+        int w = Math.min(worldWidth, Math.max(1, width)), h = Math.min(height(), Math.max(1, height));
+        return new Camera(Math.max(0, Math.min(worldWidth - w, x + PLAYER_WIDTH / 2 - w / 2)),
             Math.max(0, Math.min(height() - h, y + PLAYER_HEIGHT / 2 - h / 2)), w, h);
     }
     public Canvas frame(int width, int height, long now, boolean checker, boolean animate) {
@@ -183,9 +185,9 @@ public final class Showroom {
         return canvas;
     }
     public Canvas draw(Camera camera, long now, boolean checker, boolean animate) {
-        Canvas scene = new Canvas(WIDTH, height());
-        for (int row = 0; row < height(); row++) for (int col = 0; col < WIDTH; col++) {
-            boolean edge = col == 0 || row == 0 || col == WIDTH - 1 || row == height() - 1;
+        Canvas scene = new Canvas(worldWidth, height());
+        for (int row = 0; row < height(); row++) for (int col = 0; col < worldWidth; col++) {
+            boolean edge = col == 0 || row == 0 || col == worldWidth - 1 || row == height() - 1;
             int ground = checker && (col / 6 + row / 3) % 2 == 0 ? 0x233438 : 0x192a2f;
             scene.put(col, row, new Cell(edge ? '#' : ' ', edge ? 0x6c898d : ground, ground));
         }
@@ -218,6 +220,10 @@ public final class Showroom {
         for (int row = 0; row < camera.height; row++) for (int col = 0; col < camera.width; col++)
             viewport.put(col, row, scene.get(camera.x + col, camera.y + row));
         return viewport;
+    }
+    Canvas arenaFrame(int width, int height, long now, boolean checker, boolean animate) {
+        worldWidth = Math.max(worldWidth, width); worldHeight = Math.max(worldHeight, height);
+        return draw(camera(width, height), now, checker, animate);
     }
     private void drawMask(Canvas scene, Weapon weapon, Direction direction, int px, int py, char glyph, int color) {
         for (int row = Math.max(1, py - weapon.range); row < Math.min(height() - 1, py + PLAYER_HEIGHT + weapon.range); row++)

@@ -19,7 +19,7 @@ public final class FreeForAllView {
             default -> null;
         };
         if (attack != null) { world.attack(world.player(), attack, now); return true; }
-        if (shop && key >= '1' && key <= '4') {
+        if (key >= '1' && key <= '4') {
             world.buy(world.player(), FreeForAll.Upgrade.values()[key - '1']); return true;
         }
         switch (Character.toLowerCase(key)) {
@@ -33,6 +33,27 @@ public final class FreeForAllView {
             default -> { return false; }
         }
         return true;
+    }
+    /** The simulation owns every cell of the central viewport. */
+    Canvas arenaFrame(int width, int height, long now, boolean checker, boolean animate) {
+        if (width < 12 || height < 6) return MenuStyle.canvas(width, height);
+        world.tick(now);
+        var camera = world.camera(width, height);
+        Canvas c = world.draw(camera, now, checker, animate);
+        MenuStyle.text(c, 1, 0, width - 2, "FREE FOR ALL / " + world.region(), MenuStyle.INK);
+        if (!world.player().alive()) {
+            box(c, camera, List.of("JE BENT VERSLAGEN", "Startbonus: " + world.player().totalXp() + " XP", "ENTER: respawn | Esc: lobby"));
+        } else if (scoreboard) {
+            List<String> lines = new ArrayList<>(); lines.add("RANGLIJST / XP / KILLS");
+            for (var fighter : world.ranking()) lines.add(fighter.name() + (fighter.bot() ? " [BOT]" : " [JIJ]") + " / " + fighter.totalXp() + " XP / " + fighter.kills());
+            lines.add("Tab: sluiten"); box(c, camera, lines);
+        } else if (shop) {
+            List<String> lines = new ArrayList<>(); lines.add("UPGRADES / 1-4 ook direct bruikbaar");
+            int i = 1;
+            for (var upgrade : FreeForAll.Upgrade.values()) lines.add(i++ + " " + upgrade.label + " / " + world.player().level(upgrade) + "/5");
+            lines.add("U: sluiten"); box(c, camera, lines);
+        }
+        return c;
     }
     public Canvas frame(int width, int height, long now, boolean checker, boolean animate) {
         Canvas canvas = new Canvas(width, height);
@@ -85,9 +106,9 @@ public final class FreeForAllView {
         return canvas;
     }
     private void box(Canvas canvas, FreeForAll.Camera camera, List<String> lines) {
-        int width = 58, height = lines.size() + 2;
-        int left = 2 + Math.max(0, (camera.width() - width) / 2);
-        int top = 4 + Math.max(0, (camera.height() - height) / 2);
+        int width = Math.min(58, canvas.width()), height = Math.min(lines.size() + 2, canvas.height());
+        int left = Math.max(0, (canvas.width() - width) / 2);
+        int top = Math.max(0, (canvas.height() - height) / 2);
         for (int y = 0; y < height; y++) for (int x = 0; x < width; x++) {
             boolean edge = y == 0 || y == height - 1 || x == 0 || x == width - 1;
             char ch = !edge ? ' ' : (y == 0 || y == height - 1) ? (x == 0 || x == width - 1 ? '+' : '-') : '|';
@@ -95,7 +116,7 @@ public final class FreeForAllView {
         }
         for (int i = 0; i < lines.size(); i++) {
             String line = lines.get(i);
-            canvas.text(left + 2, top + i + 1, line.substring(0, Math.min(line.length(), width - 4)));
+            canvas.text(left + 2, top + i + 1, line.substring(0, Math.max(0, Math.min(line.length(), width - 4))));
         }
     }
 }

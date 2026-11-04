@@ -24,6 +24,8 @@ public final class Main {
     private AsciiLevel asciiLevel;
     private FreeForAllView freeForAll;
     private Showroom showroom;
+    private final GameMenu menus = new GameMenu();
+    private GameChat chat = new GameChat();
 
     Main(Sprite custom, String source, int size) throws IOException {
         this.custom = custom; this.source = source;
@@ -54,17 +56,21 @@ public final class Main {
             Sprite sprite = path == null ? null : Sprite.load(path);
             new Main(sprite, path == null ? "meegeleverde held" : "eigen PNG (" + sprite.width() + "x" + sprite.height() + ")", size).run();
         } catch (Exception e) {
-            System.err.println("Terminal Sprite Lab: " + e.getMessage());
+            System.err.println("GLYPH Engine: " + e.getMessage());
             System.err.println("Start in een interactieve terminal (Windows Terminal/PowerShell), niet in een IDE-uitvoervenster.");
             System.exit(1);
         }
     }
     private static void help() {
-        System.out.println("Terminal Sprite Lab | Java 17+ | ANSI + UTF-8");
+        System.out.println("GLYPH ENGINE | Terminal Sprite Lab | Java 17+ | ANSI + UTF-8");
         System.out.println("java --enable-native-access=ALL-UNNAMED -jar target/terminal-sprite-lab.jar [--png pad.png] [--size 8|16|32]");
-        System.out.println("1-9: demo | 0: pedit5-stijl | WASD: bewegen | +/-: formaat | B: achtergrond | P: animatie | R: positie | M/Esc: menu | Q: stop");
+        System.out.println("Startscherm: elke toets | Menu's: WASD/pijlen + Enter | Esc: terug");
+        System.out.println("Nieuwe game: kies uit tien demo's en single-/multiplayer; meld je gereed in de lobby en start.");
+        System.out.println("Spel: T global chat | Y teamchat | Esc lobby | M hoofdmenu | Q stop | Ctrl+C/D altijd afsluiten");
+        System.out.println("WASD: bewegen | +/-: formaat | B: achtergrond | P: animatie | R: opnieuw");
         System.out.println("Level 1: E pakken/kist openen | F wapen wisselen | Spatie aanvallen | R level opnieuw");
-        System.out.println("Demo 2 FFA: WASD lopen | pijlen aanvallen | U upgrades (1-4) | Tab ranglijst | Enter respawn");
+        System.out.println("Demo 2 FFA: WASD lopen | pijlen aanvallen | 1-4 direct upgraden | U overzicht | Tab ranglijst | Enter respawn");
+        System.out.println("Servers, saves en agentcode zijn UI-prototypes; chat is lokaal. Schermvullend speelveld; zijpanelen vanaf 80x22.");
         System.out.println("Demo 4: 15 ASCII-monsters | Demo 5: E wapens pakken, F wisselen, pijlen/Spatie aanvallen, V bereik");
     }
     private void run() throws IOException {
@@ -77,14 +83,14 @@ public final class Main {
             while (running && !session.interrupted()) {
                 for (int expired : keys.expire(System.nanoTime())) handle(expired);
                 // Leave the final column and row unused: never trigger terminal autowrap/scroll.
-                int width = Math.max(1, Math.min(terminal.getWidth() - 1, 240));
-                int height = Math.max(1, Math.min(terminal.getHeight() - 1, 100));
+                int width = Math.max(1, terminal.getWidth() - 1);
+                int height = Math.max(1, terminal.getHeight() - 1);
                 long now = System.nanoTime();
                 if (now - statsAt >= 1_000_000_000L) {
                     stats = "ANSI UTF-8 bytes/s: " + (long) ((display.totalBytes() - bytesAt) * 1_000_000_000.0 / (now - statsAt));
                     statsAt = now; bytesAt = display.totalBytes();
                 }
-                display.render(mode == 0 ? menu(width, height) : demo(width, height, now, stats));
+                display.render(frame(width, height, now, stats));
                 int key = terminal.reader().read(33);
                 if (key == -1) break;
                 if (key != NonBlockingReader.READ_EXPIRED) for (int decoded : keys.accept(key, System.nanoTime())) handle(decoded);
@@ -98,17 +104,72 @@ public final class Main {
             }
         }
     }
-    private Canvas menu(int width, int height) {
-        Canvas c = new Canvas(width, height);
-        c.text(2, 1, "TERMINAL SPRITE LAB", 0x71e6bb);
-        c.text(2, 2, "Tien speelbare demo's - geen grafisch venster");
-        for (int i = 0; i < MODES.length; i++) c.text(2, 4 + i, (i == 9 ? "0" : Integer.toString(i + 1)) + "  " + MODES[i]);
-        c.text(2, 14, "Kies 1-9 of 0 (pedit5), zonder Enter. Q sluit af.");
-        c.text(2, 16, "WASD bewegen | +/- 8,16,32 px | B achtergrond");
-        c.text(2, 17, "P animatie | R beginpositie | M/Esc menu | Q stop");
-        c.text(2, 19, "PNG-bron: " + source);
-        c.text(2, 20, "Formaat: " + SIZES[sizeIndex] + "x" + SIZES[sizeIndex] + " | Windows Terminal + monospace aanbevolen");
-        c.text(2, 22, "Vergelijking 16px: 96x32 aanbevolen; 32px: 132x48.");
+    Canvas frame(int width, int height, long now, String stats) {
+        if (menus.screen() != GameMenu.Screen.PLAY) return menus.frame(width, height, now);
+        GameLayout layout = GameLayout.of(width, height);
+        Canvas c = MenuStyle.canvas(width, height);
+        c.blit(playfield(layout.fieldWidth(), layout.fieldHeight(), now), layout.left(), 0);
+        if (layout.left() > 0) {
+            GameHud.draw(c, layout.left(), height, mode == 2 && freeForAll != null ? freeForAll.world() : null,
+                mode == 1 && asciiLevel != null ? 3 - asciiLevel.monstersRemaining() : 0);
+            chat.draw(c, width - layout.right(), 0, layout.right(), height);
+        } else {
+            var p = mode == 2 && freeForAll != null ? freeForAll.world().player() : null;
+            String status = p == null ? "HP -- | XP -- | Kills --" : "HP " + p.hp() + "/" + p.maxHp()
+                + " | XP " + p.availableXp() + " | Kills " + p.kills();
+            MenuStyle.text(c, 0, height - 2, width, status, MenuStyle.GREEN);
+            MenuStyle.text(c, 0, height - 1, width, "T/Y chat | Esc lobby | M menu | 1-4 skills", MenuStyle.MUTED);
+        }
+        String message = mode == 2 && freeForAll != null ? freeForAll.world().message()
+            : mode == 1 && asciiLevel != null ? asciiLevel.message()
+            : (mode == 4 || mode == 5) && showroom != null ? showroom.message()
+            : "WASD bewegen | +/- formaat | B grond | P animatie | R reset";
+        MenuStyle.text(c, layout.left(), layout.fieldHeight(), layout.fieldWidth(), message, MenuStyle.MUTED);
+        if (layout.left() == 0 && chat.editing()) chat.draw(c, 0, Math.max(0, height - 11), width, Math.min(height, 11));
+        return c;
+    }
+    /** Render scenes directly into the central viewport, without the old demo headers or padding. */
+    private Canvas playfield(int width, int height, long now) {
+        if (mode == 2) {
+            if (freeForAll == null) freeForAll = new FreeForAllView(now);
+            return freeForAll.arenaFrame(width, height, now, checker, animate);
+        }
+        if (mode == 1) {
+            if (asciiLevel == null) asciiLevel = new AsciiLevel(Math.max(60, width), Math.max(14, height));
+            return asciiLevel.arenaFrame(width, height, now, checker, animate);
+        }
+        if (mode == 4 || mode == 5) {
+            if (showroom == null) showroom = new Showroom(mode == 5);
+            return showroom.arenaFrame(width, height, now, checker, animate);
+        }
+        Canvas c = MenuStyle.canvas(width, height);
+        TextArt art = art();
+        Sprite sprite = currentSprite();
+        int panels = mode == 9 ? 3 : 1;
+        int sw = (width + panels - 1) / panels, sh = height;
+        int aw = art == null ? sprite.width() : art.width();
+        int ah = art != null ? art.height() : mode == 9 ? sprite.height() : renderer().rows(sprite);
+        if (sw < aw + 4 || sh < ah + 4) {
+            world = null;
+            MenuStyle.text(c, 1, Math.max(0, height / 2 - 1), width - 2, "Vergroot het venster of kies - voor kleinere sprites.", MenuStyle.AMBER);
+            return c;
+        }
+        if (world == null || sw != sceneWidth || sh != sceneHeight || aw != actorWidth || ah != actorHeight) {
+            world = new World(sw, sh, aw, ah);
+            sceneWidth = sw; sceneHeight = sh; actorWidth = aw; actorHeight = ah;
+            if (!world.canPlace(x, y, aw, ah)) { x = 2; y = 2; }
+        }
+        int pose = animate && now - lastMovement < 180_000_000L ? (steps / 2) % 2 : 0;
+        if (mode == 10) sprite = PeditCharacter.create(SIZES[sizeIndex], pose);
+        else if (pose == 1 && !(custom != null && mode >= 6)) sprite = sprite.walking(pose);
+        for (int i = 0; i < panels; i++) {
+            Canvas scene = world.draw(checker, mode == 10);
+            PixelRenderer method = panels == 3 ? PixelRenderer.values()[i] : renderer();
+            if (art != null) art.draw(scene, x, y, pose);
+            else method.draw(scene, sprite, x, y);
+            if (panels == 3) MenuStyle.text(scene, 1, 0, sw - 2, method.label(), MenuStyle.AMBER);
+            c.blit(scene, i * sw, 0);
+        }
         return c;
     }
     private TextArt art() { return switch (mode) { case 1 -> TextArt.ASCII; case 3 -> TextArt.UNICODE; default -> null; }; }
@@ -202,16 +263,24 @@ public final class Main {
     }
     void handle(int input) {
         int key = Character.toLowerCase(input);
-        if (key == 'q' || key == 3 || key == 4) { running = false; return; }
+        if (key == 3 || key == 4) { running = false; return; }
+        if (menus.screen() != GameMenu.Screen.PLAY) {
+            menus.handle(input);
+            if (menus.quitRequested()) running = false;
+            int start = menus.takeStartRequest();
+            if (start != 0) openDemo(start);
+            return;
+        }
+        if (chat.handle(input)) return;
+        if (key == 'q') { running = false; return; }
+        if (key == 27) { menus.lobby(); return; }
+        if (key == 'm') { menus.home(); return; }
         if (mode == 2 && freeForAll != null && freeForAll.handle(input, System.nanoTime())) return;
         if ((mode == 4 || mode == 5) && showroom != null && showroom.handle(input, System.nanoTime())) return;
-        if (key >= '1' && key <= '9') { mode = key - '0'; reset(); return; }
         switch (key) {
             case 'e' -> { if (mode == 1 && asciiLevel != null) asciiLevel.interact(); }
             case 'f' -> { if (mode == 1 && asciiLevel != null) asciiLevel.nextWeapon(); }
             case ' ' -> { if (mode == 1 && asciiLevel != null) asciiLevel.attack(System.nanoTime()); }
-            case '0' -> { mode = 10; checker = false; reset(); }
-            case 'm', 27 -> { mode = 0; world = null; }
             case '+', '=' -> { if (mode != 1 && mode != 2 && mode != 4 && mode != 5) { sizeIndex = Math.min(2, sizeIndex + 1); reset(); } }
             case '-', '_' -> { if (mode != 1 && mode != 2 && mode != 4 && mode != 5) { sizeIndex = Math.max(0, sizeIndex - 1); reset(); } }
             case 'b' -> checker = !checker;
@@ -223,6 +292,12 @@ public final class Main {
             case 'd' -> move(1, 0);
             default -> { }
         }
+    }
+    void openDemo(int selectedMode) {
+        if (selectedMode < 1 || selectedMode > 10) throw new IllegalArgumentException("Onbekende demo");
+        mode = selectedMode; menus.playing(mode); chat = new GameChat();
+        if (mode == 10) checker = false;
+        reset();
     }
     private void reset() { x = 2; y = 2; steps = 0; lastMovement = 0; world = null; asciiLevel = null; freeForAll = null; showroom = null; }
     private void move(int dx, int dy) {

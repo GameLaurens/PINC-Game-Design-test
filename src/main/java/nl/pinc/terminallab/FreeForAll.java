@@ -262,7 +262,7 @@ public final class FreeForAll {
         }
     }
     public Camera camera(int columns, int rows) {
-        int w = Math.max(1, Math.min(100, columns)), h = Math.max(1, Math.min(28, rows));
+        int w = Math.max(1, columns), h = Math.max(1, rows);
         return new Camera(Math.max(0, Math.min(WIDTH - w, player.x + player.width() / 2 - w / 2)),
             Math.max(0, Math.min(HEIGHT - h, player.y + player.height() / 2 - h / 2)), w, h);
     }

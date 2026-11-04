@@ -114,7 +114,7 @@ class RenderingTest {
     @Test void allTenDemosRenderAndRespondToMovementAtEverySize() throws Exception {
         for (int size : new int[]{8, 16, 32}) for (int mode = 1; mode <= 10; mode++) {
             Main app = new Main(null, "test", size);
-            app.handle(mode == 10 ? '0' : '0' + mode);
+            app.openDemo(mode);
             Canvas before = app.demo(160, 55, System.nanoTime(), "");
             app.handle('d');
             Canvas after = app.demo(160, 55, System.nanoTime(), "");
@@ -127,7 +127,7 @@ class RenderingTest {
     @Test void resizingToTinyTerminalAndBackDoesNotBreakAnyDemo() throws Exception {
         Main app = new Main(null, "test", 32);
         for (int mode = 1; mode <= 10; mode++) {
-            app.handle(mode == 10 ? '0' : '0' + mode);
+            app.openDemo(mode);
             assertDoesNotThrow(() -> app.demo(1, 1, System.nanoTime(), ""));
             assertDoesNotThrow(() -> app.demo(160, 55, System.nanoTime(), ""));
         }
@@ -155,7 +155,7 @@ class RenderingTest {
     }
     @Test void peditDemoKeepsOwnCharacterWhenAnExternalPngIsSelected() throws Exception {
         Main app = new Main(new Sprite(1, 1, new int[]{0xffff00ff}), "eigen PNG", 16);
-        app.handle('0');
+        app.openDemo(10);
         Canvas frame = app.demo(80, 30, System.nanoTime(), "");
         int amberPixels = 0;
         for (int y = 4; y < 26; y++) for (int x = 2; x < 77; x++) {

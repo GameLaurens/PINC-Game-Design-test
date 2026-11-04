@@ -106,7 +106,7 @@ class AsciiLevelTest {
         }
     }
     @Test void mainMenuSelectionPickupAndResetAreWiredToLevelOne() throws Exception {
-        Main app = new Main(null, "test", 16); app.handle('1');
+        Main app = new Main(null, "test", 16); app.openDemo(1);
         Canvas before = app.demo(79, 23, System.nanoTime(), "");
         assertTrue(row(before, 20).contains("Wapen: geen"));
         app.handle('e');

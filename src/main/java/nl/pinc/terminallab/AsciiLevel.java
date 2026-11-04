@@ -46,7 +46,8 @@ public final class AsciiLevel {
     private static final AsciiModel CLOSED_CHEST = new AsciiModel(" .----. ", "/____/| ", "|_[]_|/ ");
     private static final AsciiModel OPEN_CHEST = new AsciiModel(" .----. ", " /    / ", "/____/| ", "|____|/ ");
     private static final AsciiModel SWING = new AsciiModel("--->");
-    private final int width, height, chestX = 3, chestY;
+    private int width, height;
+    private final int chestX = 3, chestY;
     private final List<World.Rect> walls;
     private final List<Monster> monsters = new ArrayList<>();
     private final List<Pickup> pickups = new ArrayList<>();
@@ -167,5 +168,12 @@ public final class AsciiLevel {
             else weapon().model.draw(canvas, x + 3, y, STEEL);
         }
         return canvas;
+    }
+    Canvas arenaFrame(int columns, int rows, long now, boolean checker, boolean animate) {
+        // Growing the terminal extends the floor; shrinking only changes the camera.
+        width = Math.max(width, columns); height = Math.max(height, rows);
+        int cameraX = Math.max(0, Math.min(width - columns, x + PLAYER_WIDTH / 2 - columns / 2));
+        int cameraY = Math.max(0, Math.min(height - rows, y + PLAYER_HEIGHT / 2 - rows / 2));
+        return draw(now, checker, animate).window(cameraX, cameraY, columns, rows);
     }
 }

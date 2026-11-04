@@ -100,7 +100,7 @@ class FreeForAllTest {
         assertTrue(monster.alive()); assertEquals(10, monster.hp());
         assertFalse(world.player().alive());
     }
-    @Test void cameraScrollsClampsAndNeverShowsTheWholeMapEvenOnLargeScreens() {
+    @Test void cameraScrollsClampsAtWorldEdgesAndUsesTheEntireAvailableViewport() {
         FreeForAll world = new FreeForAll(NOW, false);
         var start = world.camera(75, 15);
         world.player().x = 120; world.player().y = 55;
@@ -108,10 +108,14 @@ class FreeForAllTest {
         assertTrue(moved.x() > start.x()); assertTrue(moved.y() > start.y());
         assertTrue(moved.x() <= 120 && moved.x() + moved.width() > 127);
         world.player().x = 232; world.player().y = 95;
-        var edge = world.camera(1000, 1000);
-        assertEquals(100, edge.width()); assertEquals(28, edge.height());
+        var edge = world.camera(180, 70);
+        assertEquals(180, edge.width()); assertEquals(70, edge.height());
         assertEquals(FreeForAll.WIDTH, edge.x() + edge.width());
         assertEquals(FreeForAll.HEIGHT, edge.y() + edge.height());
+        var oversized = world.camera(320, 120);
+        assertEquals(320, oversized.width()); assertEquals(120, oversized.height());
+        assertEquals(0, oversized.x()); assertEquals(0, oversized.y());
+        assertDoesNotThrow(() -> world.draw(oversized, NOW, true, false));
     }
     @Test void terrainHasRoutesAcrossTheWorldAndWorldModelsUseOnlyAscii() {
         FreeForAll world = new FreeForAll(NOW, false);
@@ -157,7 +161,7 @@ class FreeForAllTest {
         assertTrue(view.handle(TerminalKeys.LEFT, NOW));
         Main app;
         try { app = new Main(null, "test", 16); } catch (Exception e) { throw new AssertionError(e); }
-        app.handle('2'); app.demo(79, 23, NOW, ""); app.handle('u'); app.handle('1');
+        app.openDemo(2); app.demo(79, 23, NOW, ""); app.handle('u'); app.handle('1');
         assertTrue(rows(app.demo(79, 23, NOW, "")).contains("FREE FOR ALL"));
     }
     private String rows(Canvas canvas) {

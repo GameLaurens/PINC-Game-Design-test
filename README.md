@@ -1,6 +1,27 @@
-# Terminal Sprite Lab
+# GLYPH Engine / Terminal Sprite Lab
 
 Een kleine Java-applicatie om **tien werkende, bestuurbare terminaldemo's** te vergelijken. Alles verschijnt in dezelfde terminal: ASCII, Unicode, RGB-blokken en PNG-sprites. Geen Swing/JavaFX-venster, Sixel of Kitty Graphics.
+
+## GLYPH Engine: schermvullende terminalinterface
+
+De engine heeft een eigen groot pixelletterlogo dat op het titelscherm rustig omhoog en omlaag beweegt. De retrovormgeving gebruikt gebroken wit, antraciet en gedempt rood. Dit is bewust een lokaal prototype met tien bestaande demo's.
+
+1. Druk op een willekeurige toets op het titelscherm om het hoofdmenu te openen.
+2. Kies **Nieuwe game aanmaken** met WASD of de pijlen en bevestig met **Enter**.
+3. Kies een van de **tien games** met **A/D of links/rechts**. Selecteer eronder **Singleplayer** of **Multiplayer (prototype)**. Enter wisselt de geselecteerde instelling ook.
+4. Kies **Aanmaken en naar lobby**. Hier staan jij en, bij Free for All, de vier lokale bots.
+5. Je kunt **Eigen agent programmeren** openen en een gedragsprofiel kiezen. De codeweergave is een UI-voorbeeld en wordt niet uitgevoerd.
+6. Meld je **gereed**, kies **Game starten** en druk Enter.
+
+Je kunt ook een van de drie **actieve voorbeeldservers** of een **voorbeeldsave** openen. Beide routes leiden naar een lobby en starten daarna de bijbehorende demo. De serverlijst maakt geen netwerkverbinding; saves laden geen opgeslagen voortgang. Singleplayer en multiplayer gebruiken dezelfde lokale demo's. Alleen Free for All heeft medespelers: vier bots.
+
+De spelindeling volgt het wireframe: **healthbar, XP, kills, aantal skill-upgrades en vier gesegmenteerde upgradebalken links**, met daaronder een **live leaderboard op kills**. **Chat staat rechts.** Het speelveld gebruikt alle overige breedte en de volledige hoogte, met slechts één statusregel. In Free for All zijn statistieken en leaderboard gekoppeld aan de echte simulatie en koop je upgrades direct met **1–4**, zonder eerst U te drukken. De andere demo's hebben geen HP-/XP-systeem: daar staat `--`. Level 1 toont wel het aantal verslagen monsters.
+
+**T** opent global chat, **Y** teamchat. Typ een bericht en verstuur met **Enter**; **Esc** annuleert de invoer. Kanalen hebben een afzonderlijke lokale geschiedenis. Toetsen in de chat bewegen je personage niet en sluiten het spel niet af. Er is nog geen netwerkbezorging. **Esc** buiten de chat gaat naar de lobby; **M** opent het hoofdmenu. Opnieuw starten vanuit een lobby begint een verse demo. **Q** sluit af tijdens het spelen; kies **Afmelden** in het hoofdmenu. **Ctrl+C/D** sluit overal af.
+
+De interface benut de beschikbare terminalafmetingen; de oude limiet van 240×100 schermcellen is verwijderd. Vanaf **80×22 gebruikte cellen** verschijnen beide zijpanelen. De zijbalken nemen elk ongeveer een zevende van de breedte in, met maximaal 30 cellen per kant; het spel krijgt de rest. In een smaller venster staan statistieken onderaan en verschijnt chat als invoerpaneel. Het menu past vanaf 64×22 gebruikte cellen. Alleen de laatste terminalkolom en -rij worden vrijgehouden om automatisch doorschuiven te voorkomen. **140×40** is een prettig startformaat; vergroten geeft daadwerkelijk meer speelveld. Voor de vergelijking van drie 32×32-sprites met zijpanelen is ongeveer **180×56** prettig.
+
+**Demo selecteren:** de nummers in de technische beschrijvingen hieronder verwijzen naar de gamekeuze bij **Nieuwe game aanmaken**. Cijfertoetsen wisselen tijdens het spelen niet meer van demo; **1–4** zijn gereserveerd voor FFA-upgrades. De amber pedit5-demo is nu de tiende keuze.
 
 ## Starten in PowerShell
 
@@ -26,7 +47,7 @@ java --enable-native-access=ALL-UNNAMED -jar target/terminal-sprite-lab.jar
 
 De JAR bevat de runtime-dependencies en voorbeeldsprites; op een andere machine is alleen Java 17+ nodig. `--enable-native-access` geeft JLine toestemming zijn native terminalbackend te gebruiken en voorkomt de bijbehorende waarschuwing op recente Java-versies. Er wordt geen software geïnstalleerd door de applicatie.
 
-Gebruik een monospace-lettertype met bloktekens, bijvoorbeeld Cascadia Mono of Consolas. Voor alle demo's en de vergelijking met 32×32 is **140 kolommen × 50 rijen** prettig. Voor de vergelijking met 16×16 is 96×32 voldoende. Verklein eventueel de tekst met Ctrl + muiswiel in Windows Terminal. Een te klein venster geeft een melding; `-` kiest een kleinere sprite. De applicatie schaalt de terminalafmetingen dynamisch mee, tot 240×100 gebruikte cellen.
+Gebruik een monospace-lettertype met bloktekens, bijvoorbeeld Cascadia Mono of Consolas. **140 kolommen × 40 rijen** is prettig voor de nieuwe interface; voor de vergelijking met 32×32 en beide zijpanelen is **180×56** aanbevolen. Verklein eventueel de tekst met Ctrl + muiswiel in Windows Terminal. Een te klein venster geeft een melding; `-` kiest een kleinere sprite. De applicatie gebruikt ook grotere terminalvensters volledig.
 
 Een eigen PNG laden:
 
@@ -76,7 +97,7 @@ Het **zwaard** en de **bijl** verdwijnen van de grond zodra je ze oppakt en word
 
 De monsters hebben respectievelijk 2, 3 en 4 leven. Ze staan stil in deze proefopstelling. Een treffer licht kort rood op; verslagen monsters verdwijnen en geven 2 goud. Aanvallen heeft een korte wachttijd van 200 ms. De speler botst met muren, monsters en de kist. Het spelerskader reserveert steeds 7×4 cellen zodat ook een uitgerust wapen past; daardoor tellen enkele lege cellen mee voor botsingen.
 
-Een venster van **80×24 tekencellen** is genoeg. Het level past zich bij het openen aan het beschikbare venster aan, vanaf 64×22 gebruikte cellen. Bij verkleinen blijft de voortgang bewaard en verschijnt zo nodig een melding; vergroot het venster weer of gebruik R om een nieuw level voor het kleinere venster te maken. `+` en `-` veranderen alleen spriteformaten in de andere demo's.
+Een venster van **80×24 tekencellen** is genoeg. Het level vult het beschikbare middenvlak. Bij vergroten wordt de vloer uitgebreid; bij verkleinen volgt een camera de speler. Positie, buit en verslagen monsters blijven bewaard. `+` en `-` veranderen alleen spriteformaten in de andere demo's.
 
 Een nieuw tekstmodel toevoegen kan in [`AsciiLevel.java`](src/main/java/nl/pinc/terminallab/AsciiLevel.java): voeg een `MonsterType` toe met naam, leven, kleur en een `AsciiModel` met tekstregels. Voeg daarna een exemplaar met een positie toe aan het level. [`AsciiModel.java`](src/main/java/nl/pinc/terminallab/AsciiModel.java) tekent die regels en laat spaties transparant, zodat dezelfde aanpak ook voor nieuwe kisten en wapens bruikbaar is.
 
@@ -84,21 +105,21 @@ Een nieuw tekstmodel toevoegen kan in [`AsciiLevel.java`](src/main/java/nl/pinc/
 
 Start `.\run.cmd` en kies **2**. Demo 2 is vervangen door een **lokale Free for All met vier bots**, in dezelfde ASCII-stijl als level 1. Er is geen server of netwerk nodig. De bots zijn zichtbaar als `[BOT] Rook`, `[BOT] Nyx`, `[BOT] Bram` en `[BOT] Iris`. Ze delen jouw wereld, zoeken gevechten, vallen ook elkaar aan, verdienen XP, kopen upgrades en respawnen.
 
-De wereld is **240×100 tekencellen**. Een camera volgt jouw speler en toont hoogstens 100×28 cellen tegelijk, afhankelijk van de terminalgrootte. Je moet dus rondlopen om ruines, de oostelijke wildernis en de zuidelijke crypten te ontdekken. Vensterwijzigingen passen alleen het zicht aan: positie, monsters, XP en upgrades blijven behouden. Het minimum is 64×22 gebruikte terminalcellen; 100×32 is prettig.
+De wereld is **240×100 tekencellen**. Een camera volgt jouw speler en vult het volledige middenvlak; de oude begrenzing op 100×28 cellen is verwijderd. Je kunt rondlopen om ruines, de oostelijke wildernis en de zuidelijke crypten te ontdekken. Vensterwijzigingen passen alleen het zicht aan: positie, monsters, XP en upgrades blijven behouden. Bij een viewport groter dan de eindige FFA-wereld blijven de wereldgrenzen zichtbaar. **140×40** is een prettig startformaat.
 
 | Toets | Actie in Free for All |
 |---|---|
 | **WASD** | Bewegen |
 | **Pijl omhoog/omlaag/links/rechts** | Een zwaardaanval in die richting |
-| **U**, daarna **1–4** | Upgradeoverzicht openen en een upgrade kopen |
+| **1–4** / **U** | Direct een upgrade kopen / het upgradeoverzicht openen |
 | **U** | Upgradeoverzicht sluiten |
 | **Tab** | Ranglijst van jou en de vier bots tonen/sluiten |
 | **Enter** | Na een nederlaag opnieuw spawnen |
 | B / P | Achtergrond / loopanimatie wisselen |
 | **R** | Volledig nieuw spel; alle voortgang wissen |
-| **M** / Esc / **Q** | Hoofdmenu / hoofdmenu / afsluiten |
+| **M** / Esc / **Q** | Hoofdmenu / lobby / afsluiten |
 
-In het upgrademenu betekenen 1–4 een aankoop; sluit het menu eerst met U als je met een cijfertoets naar een andere demo wilt. Gevechten lopen tijdens het upgrademenu en de ranglijst door. Je begint met een zichtbaar zwaard; het oppakken en wisselen van wapens blijft een onderdeel van level 1.
+Met 1–4 koop je direct een upgrade, ook zonder geopend upgrademenu. Kies een andere demo via M en Nieuwe game aanmaken. Gevechten lopen tijdens het upgrademenu, de ranglijst en chat door. Je begint met een zichtbaar zwaard; het oppakken en wisselen van wapens blijft een onderdeel van level 1.
 
 ### Monsters en upgrades
 
@@ -157,7 +178,7 @@ Onder de rekken staat op **(60,46)** een **onsterfelijke golem**. Deze beweegt n
 | **Spatie** | Aanvallen in je laatste loop-/aanvalsrichting |
 | **V** | Bereikvoorbeeld aan/uit: `.` is bereik, `*` is de aanval |
 | **R** | Begin opnieuw, met lege inventaris en alle wapens terug in de rekken |
-| **M / Esc / Q** | Hoofdmenu / hoofdmenu / afsluiten |
+| **M / Esc / Q** | Hoofdmenu / lobby / afsluiten |
 
 | Wapen | Schade | Bereik | Wachttijd | Aanvalsvorm |
 |---|---:|---:|---:|---|
@@ -179,7 +200,7 @@ Onder de rekken staat op **(60,46)** een **onsterfelijke golem**. Deze beweegt n
 
 Bereik wordt in tekencellen gemeten vanaf het spelerskader van **10×5 cellen**, inclusief gedragen uitrusting. Rechte aanvallen en waaiers raken alleen in de gekozen richting; de hamer en bom raken rondom de speler. Een waaier wordt breder met de afstand. Het bereikvoorbeeld en de schadecontrole gebruiken exact hetzelfde gebied. Afstandsaanvallen raken direct, met een kort zichtbaar tekstspoor; de bom ontploft rondom jezelf. De wapens zijn voorbeelden zonder munitie- of werpsimulatie.
 
-De wereld is **124×58 cellen** en de camera volgt je. Voor beide showrooms is **80×24** bruikbaar, met minimaal **64×22 gebruikte cellen**; een groter venster toont meer modellen tegelijk. Vensterwijzigingen bewaren je positie, inventaris en schadestatistieken. **+ / -** hebben hier geen effect, want alle modellen hebben een vast tekstformaat. **B** en **P** wisselen de achtergrond en loopanimatie.
+De wapenshowroom begint met **124×58 cellen** en de camera volgt je. Grotere viewports breiden de begaanbare vloer uit, zodat het volledige middenvlak wordt gevuld. Voor beide showrooms is **80×24** bruikbaar; een groter venster toont meer modellen tegelijk. Vensterwijzigingen bewaren je positie, inventaris en schadestatistieken. **+ / -** hebben hier geen effect, want alle modellen hebben een vast tekstformaat. **B** en **P** wisselen de achtergrond en loopanimatie.
 
 De wapenmodellen en eigenschappen staan in `ShowroomCatalog.Weapon`; de showroom, camera en gevechtslogica in [`Showroom.java`](src/main/java/nl/pinc/terminallab/Showroom.java). Deze wapens worden nog niet aan level 1 of FFA toegevoegd.
 
@@ -187,8 +208,8 @@ De wapenmodellen en eigenschappen staan in `ShowroomCatalog.Weapon`; de showroom
 
 | Toets | Actie |
 |---|---|
-| `1`–`9` | Open meteen een demo, ook vanuit een andere demo |
-| `0` | Open de pedit5-variant: amber avonturier met zwaard en schild |
+| WASD / pijlen + Enter | In menu's: navigeren en bevestigen; kies een van de tien demo's bij Nieuwe game |
+| `1`–`4` | In Free for All: koop direct een upgrade |
 | `W A S D` | Beweeg omhoog, links, omlaag en rechts, zonder Enter |
 | `E` / `F` / Spatie | In level 1: pakken/openen, wapen wisselen, aanvallen |
 | Pijlen / `U` / Tab / Enter | In demo 2: gericht aanvallen, upgrades, ranglijst, respawn |
@@ -197,8 +218,9 @@ De wapenmodellen en eigenschappen staan in `ShowroomCatalog.Weapon`; de showroom
 | `B` | Wissel tussen dambordachtergrond en egale grond |
 | `P` | Schakel de eenvoudige loopanimatie in/uit |
 | `R` | Herstel de beginpositie |
-| `M` / `Esc` | Terug naar het hoofdmenu |
-| `Q` / `Ctrl+C` / `Ctrl+D` | Sluit af en herstel de terminal |
+| `T` / `Y` | Open global chat / teamchat; Enter verstuurt en Esc annuleert |
+| `M` / `Esc` | Hoofdmenu / lobby (buiten de chat) |
+| `Q` / `Ctrl+C` / `Ctrl+D` | Q sluit af tijdens een game; Ctrl+C/D werkt overal |
 
 Alle demo's hebben een achtergrond, muren en bij voldoende ruimte enkele bruine obstakels. Botsingen gebruiken het **hele rechthoekige kader** van de weergave, ook de transparante randen. In de vergelijking bewegen de drie exemplaren tegelijk en gebruiken ze hetzelfde grootste botsingskader. Daardoor blijven posities en obstakels gelijk, terwijl het verschil in hoogte zichtbaar blijft.
 
@@ -217,13 +239,13 @@ De ingebouwde held heeft twee beenposes tijdens beweging. De tekstpoppetjes hebb
 | 7 | Spatie + achtergrondkleur | Eén bronpixel per terminalcel |
 | 8 | `▀` + voor- en achtergrondkleur | Twee verticale bronpixels per terminalcel |
 | 9 | Vergelijking naast elkaar | Dezelfde sprite, achtergrond, invoer en positie met methodes 6–8 |
-| 0 | Pedit5-stijl | Amberkleurig lijnpoppetje met zwaard en schild op zwart, getekend met `▀` |
+| 10 | Pedit5-stijl | Amberkleurig lijnpoppetje met zwaard en schild op zwart, getekend met `▀` |
 
 Demo's 4 en 5 gebruiken uitsluitend ASCII-modellen met ANSI-kleuren. Demo's 6–9 vergelijken de pixelrenderers en kunnen een eigen PNG gebruiken: 6 toont voorgrondblokken, 7 achtergrondkleuren en 8 halfblokken. PNG is de invoerbron; de manier van tekenen is daarvan onafhankelijk.
 
 ### Pedit5-poppetje proberen
 
-Start met `.\run.cmd` en druk op **`0`**. Je ziet een eigen interpretatie van het kleine avonturiersfiguurtje uit pedit5: een hoofd, eenvoudige tuniek, benen, een lang zwaard links en een rond schild rechts. De amberkleurige lijnen op een zwarte achtergrond sluiten aan bij de [gameplayscreenshots van pedit5](https://howtomakeanrpg.com/r/l/g/the-dungeon/). Het is een nieuw getekende variant, geen exacte kopie of PLATO-emulator.
+Start met `.\run.cmd` en kies bij Nieuwe game **10 / Amber Adventure**. Je ziet een eigen interpretatie van het kleine avonturiersfiguurtje uit pedit5: een hoofd, eenvoudige tuniek, benen, een lang zwaard links en een rond schild rechts. De amberkleurige lijnen op een zwarte achtergrond sluiten aan bij de [gameplayscreenshots van pedit5](https://howtomakeanrpg.com/r/l/g/the-dungeon/). Het is een nieuw getekende variant, geen exacte kopie of PLATO-emulator.
 
 Beweeg met **WASD**, wissel met **+ / -** tussen 8×8, 16×16 en 32×32 en gebruik **P** voor de loopanimatie. Op 32×32 zijn de dunne lijnen en het schild het duidelijkst; op 8×8 vallen kleine details samen. **B** zet een subtiel amber dambord aan om de transparantie te bekijken. Het poppetje gebruikt de bestaande halfblokrenderer, botsingen en verschillenbuffer. Een met `--png` gekozen bestand vervangt dit personage niet.
 
@@ -254,7 +276,7 @@ Volledig transparante pixels laten de achtergrond staan. Deels transparante pixe
 
 RGB wordt uitgegeven met `ESC[38;2;R;G;Bm` voor de voorgrond en `ESC[48;2;R;G;Bm` voor de achtergrond. `▀` gebruikt de bovenste pixel als voorgrond en de onderste als achtergrond. Er zijn geen afbeeldingsprotocollen nodig.
 
-Er is één initiële schermwisactie bij het openen. Beweging wist het scherm niet: opnieuw samengestelde achtergrondcellen herstellen vanzelf de oude spritepositie. Het alternatieve scherm houdt de oorspronkelijke terminalinhoud apart. De cursor is tijdens het spelen verborgen. De lus wacht maximaal ongeveer 33 ms op invoer en tekent normaal circa 30 keer per seconde; identieke frames leveren geen uitvoer op. Een statusregel toont eenmaal per seconde het aantal gegenereerde ANSI-bytes; dit is een praktische indicator, geen FPS- of netwerkbenchmark.
+Er is één initiële schermwisactie bij het openen. Beweging wist het scherm niet: opnieuw samengestelde achtergrondcellen herstellen vanzelf de oude spritepositie. Het alternatieve scherm houdt de oorspronkelijke terminalinhoud apart. De cursor is tijdens het spelen verborgen. De lus wacht maximaal ongeveer 33 ms op invoer en tekent normaal circa 30 keer per seconde; identieke frames leveren geen uitvoer op. De spelinterface gebruikt één statusregel voor de laatste actie; technische rendererlabels nemen geen extra ruimte rond de wereld in.
 
 ## Realtime invoer op Windows
 
@@ -297,7 +319,12 @@ Stuur in een multiplayergame logische speltoestand/posities over het netwerk en 
 
 | Klasse | Verantwoordelijkheid |
 |---|---|
-| `Main` | Menu, invoer, demo's en formaatwissels |
+| `Main` | Schermroutes, spelinterface, invoer, demo's en formaatwissels |
+| `GameMenu` | Titelscherm, hoofdmenu, gamekeuze, voorbeeldsaves, lobby en agentprofielen |
+| `MenuStyle` | Gedeelde retrostijl, kleuren, panelen, balken en menukeuzes |
+| `PixelTitle` | Eigen schaalbaar GLYPH-pixelletterlogo; verticale beweging wordt door het titelscherm gestuurd |
+| `GameLayout` / `GameHud` | Schermvullende driedeling, healthbar, skillbalken en live leaderboard |
+| `GameChat` | Lokale global-/teamchat, invoerbuffer, regelafbreking en geschiedenis |
 | `TerminalSession` | Raw mode, cursor, alternatief scherm en herstel |
 | `Sprite` | PNG-decoder, schalen en ingebouwde beenpose |
 | `PixelRenderer` | Drie los te testen pixelmethodes |
@@ -320,7 +347,11 @@ mvn test
 mvn '-Dmaven.repo.local=.cache/maven' test
 ```
 
-De automatische tests controleren de drie pixelstrategieën, transparantie (ook gedeeltelijk en bij oneven hoogtes), PNG-decoding, afmetingen/aspectratio, ongeldige invoer, clipping, obstakels, schermverschillen zonder wisactie en beweging in alle tien demo's op alle drie formaten. Voor het pedit5-personage controleren ze ook de amberkleur, transparante gaten, stabiele bovenlichaamcontouren en verschillende beenposes. Ze vereisen geen echte terminal. De interactieve Windows-controle moet daarnaast de native invoer en herstelinstellingen toetsen: start de JAR, kies een demo zonder Enter, beweeg met WASD, vergelijk 6/7/8/9, probeer 0, wissel formaat, keer terug naar het menu en sluit af met Q of Ctrl+C.
+De automatische tests controleren de drie pixelstrategieën, transparantie (ook gedeeltelijk en bij oneven hoogtes), PNG-decoding, afmetingen/aspectratio, ongeldige invoer, clipping, obstakels, schermverschillen zonder wisactie en beweging in alle tien demo's op alle drie formaten. Voor het pedit5-personage controleren ze ook de amberkleur, transparante gaten, stabiele bovenlichaamcontouren en verschillende beenposes. Ze vereisen geen echte terminal. De interactieve Windows-controle moet daarnaast de native invoer en herstelinstellingen toetsen: start de JAR, open het hoofdmenu met een willekeurige toets, navigeer met WASD/pijlen en Enter naar een lobby, meld je gereed en start. Beweeg met WASD, probeer de chat met T/Y, kies via het hoofdmenu andere demo's, wissel formaat en sluit af met Q of Ctrl+C.
+
+`GameMenuTest` controleert de volledige route naar alle tien demo's, gereedmelding voor het starten, voorbeeldsaves en kamers, agentprofielen, terugnavigatie, directe upgrades en vensterverkleining. Chatcontroles toetsen kanaalscheiding, wissen en annuleren, de invoerlimiet en het afvangen van bewegings-, menu- en afsluittoetsen.
+
+`FullscreenTest` controleert opgaande en neergaande logo-animatie, de vaste startprompt, daadwerkelijk gevulde speelvelden in alle tien demo's tot 320×120 cellen, extra zicht bij vergroten, behoud van voortgang bij resizing en de koppeling van leaderboard en upgradebalken met de simulatie.
 
 De leveltests lopen via echte routes naar wapens, kist en monsters op drie veldformaten. Ze controleren zichtbaar gedragen wapens, de eenmalige kistbeloning, wisselen van uitrusting, bereik en wachttijd van aanvallen, botsingen, ASCII-modeltekens en de koppeling met het hoofdmenu en resetten.
 

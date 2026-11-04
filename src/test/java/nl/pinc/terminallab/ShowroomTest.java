@@ -137,7 +137,7 @@ class ShowroomTest {
     }
     @Test void resizingAndSizeKeysPreserveInventoryAndResetClearsIt() throws Exception {
         Main app = new Main(new Sprite(1, 1, new int[]{0xffff00ff}), "test", 32);
-        app.handle('5');
+        app.openDemo(5);
         app.demo(79, 23, 1, ""); app.handle('e');
         assertTrue(row(app.demo(79, 23, 1, ""), 18).contains("Wapen: Dolk"));
         app.handle('+'); app.handle('-');
@@ -147,7 +147,7 @@ class ShowroomTest {
         assertAscii(frame);
         app.handle('r');
         assertTrue(row(app.demo(79, 23, 1, ""), 18).contains("Wapen: geen"));
-        app.handle('4');
+        app.openDemo(4);
         assertTrue(row(app.demo(79, 23, 1, ""), 0).contains("MONSTERSHOWROOM"));
     }
     @Test void cameraFollowsPlayerAcrossEntireGalleryAndStaysInsideWorld() {

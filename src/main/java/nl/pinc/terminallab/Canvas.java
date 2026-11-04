@@ -27,4 +27,10 @@ public final class Canvas {
         for (int row = 0; row < other.height; row++)
             for (int col = 0; col < other.width; col++) put(x + col, y + row, other.get(col, row));
     }
+    public Canvas window(int x, int y, int w, int h) {
+        Canvas result = new Canvas(w, h);
+        for (int row = 0; row < h; row++) for (int col = 0; col < w; col++)
+            if (contains(x + col, y + row)) result.put(col, row, get(x + col, y + row));
+        return result;
+    }
 }
