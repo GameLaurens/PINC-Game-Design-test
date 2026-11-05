@@ -4,6 +4,7 @@ package nl.pinc.terminallab;
 final class MenuStyle {
     static final int BG = 0x191718, PANEL = 0x2b2728, INK = 0xe1d8c8, MUTED = 0xa39a90;
     static final int AMBER = 0xdb8671, GREEN = 0xb7bd91, LINE = 0x554a49;
+    static final int AVAILABLE = 0x82c99b, UNAVAILABLE = 0xe27979;
     static Canvas canvas(int w, int h) {
         Canvas c = new Canvas(w, h);
         fill(c, 0, 0, w, h, BG);

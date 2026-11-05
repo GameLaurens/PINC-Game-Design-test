@@ -8,22 +8,34 @@ De engine heeft een eigen groot pixelletterlogo dat op het titelscherm rustig om
 
 Het hoofdmenu en de lobby gebruiken een compacte indeling van maximaal **112 kolommen en 22 rijen**, horizontaal gecentreerd en dicht bij de bovenkant. Knoppen en kamers hebben vaste, kleine tussenruimtes; een groter venster trekt ze niet verder uit elkaar. De lobby groepeert spelers en startacties links, met sessiegegevens en chat rechts. Je configureert je agent in het hoofdmenu. Vanaf 64×22 blijft alles zichtbaar. De overige instelschermen zijn eveneens begrensd, terwijl het speelveld de beschikbare terminalruimte blijft gebruiken.
 
+De homepage heeft vijf acties:
+
+- **Game aanmaken:** kies een van de tien bestaande gamemodes/demo's en open of gesloten toegang. Je wordt host van een lokale lobby.
+- **Game save laden:** opent het savescherm. Dit toont een lege toestand: echte voortgang opslaan en hervatten is nog niet aangesloten. De oude voorbeeldsaves die een nieuw spel startten zijn verwijderd.
+- **Deelnemen aan bestaande game:** verplaatst de selectie naar het overzicht van actieve games; selecteer een game en bevestig met Enter. Op smalle terminals heet deze knop **Deelnemen aan game**.
+- **Agent configureren:** kies een gedragsprofiel in de bestaande agentinterface. Het profiel wordt binnen deze sessie onthouden; de voorbeeldcode wordt niet uitgevoerd.
+- **Zelf game maken:** opent een bewerkbaar gameconcept. Code wordt binnen deze sessie bewaard en nog niet uitgevoerd.
+
+Bij iedere actieve voorbeeldgame staan een **groene of rode cirkel**, de **gamemode**, het **aantal spelers/maximale capaciteit** en **In Lobby** of **In Game**. Joinstatus en spelstatus zijn onafhankelijk: groen bij In Game betekent dat je kunt deelnemen. Rood blokkeert deelname, bijvoorbeeld als een game vol is. De lokale lijst bevat bewust een open lobby, een toegankelijke lopende game en een volle lopende game. Afsluiten kan met **Q** op de homepage of overal met Ctrl+C/D.
+
 1. Druk op een willekeurige toets op het titelscherm om het hoofdmenu te openen.
 2. Kies eventueel **Agent configureren** in het hoofdmenu. Selecteer Verkenner, Verdediger of Jager en kies **Opslaan / terug** om terug te keren naar het hoofdmenu. Het profiel blijft tijdens deze programmasessie behouden, ook bij andere games en kamers. De codeweergave blijft een UI-voorbeeld en wordt niet uitgevoerd.
-3. Kies **Nieuwe game aanmaken** met WASD of de pijlen en bevestig met **Enter**.
-4. Kies een van de **tien games** met **A/D of links/rechts**. Selecteer eronder **Singleplayer** of **Multiplayer (prototype)**. Enter wisselt de geselecteerde instelling ook. Kies daarna **Aanmaken en naar lobby**. Hier staan jij en, bij Free for All, de vier lokale bots.
+3. Kies **Game aanmaken** met WASD of de pijlen en bevestig met **Enter**.
+4. Kies een van de **tien games** met **A/D of links/rechts**. Selecteer eronder **Open** of **Gesloten** toegang. Enter wisselt de geselecteerde instelling ook. Kies daarna **Aanmaken en naar lobby**. Hier staan jij en, bij Free for All, de vier lokale bots.
 5. In de lobby kun je via **Chat openen**, **T** (global) of **Y** (team) een bericht typen. **Enter** verstuurt en **Esc** annuleert het typen. Tijdens het typen worden menuacties niet uitgevoerd; versturen kan de game dus niet onbedoeld starten. De lobby toont je agentprofiel alleen ter informatie; aanpassen doe je via het hoofdmenu.
 6. Als maker van de game ben jij de **host**. Kies **Game starten** en druk Enter om direct te beginnen. Alleen de host kan een startopdracht geven; andere spelers kunnen chatten of de lobby verlaten.
 
-Je kunt ook een van de drie **actieve voorbeeldservers** of een **voorbeeldsave** openen. Een voorbeeldsave opent een lokale lobby waarin jij host bent en de bijbehorende demo kunt starten; saves laden geen opgeslagen voortgang. In een voorbeeldkamer ben je **gast** en staat de startactie op **Wacht op host**. De voorbeeldhosts zijn Rook, Nora en Bo. Deze kamers tonen alleen de gastenweergave: er is geen netwerkverbinding of externe host die de game daadwerkelijk start. Maak zelf een game aan of open een voorbeeldsave om een demo te spelen. Singleplayer en multiplayer gebruiken dezelfde lokale demo's. Alleen Free for All heeft medespelers in de simulatie: vier bots.
+Als je aan een toegankelijke voorbeeldgame deelneemt, kom je eerst als **gast** in de lobby. Het spelersoverzicht toont de deelnemers en de host; de lokale speler wordt bij deelname toegevoegd aan deze lijst. In **Open Arena / In Lobby** kun je chatten en wachten op de voorbeeldhost Rook. In **Adventure Room / In Game** kun je daarna **Game binnengaan** kiezen. Dat is deelnemen aan een lopende game en geeft geen recht om een nieuwe game te starten. **Weapon Sandbox** is vol en niet toegankelijk. Dit zijn lokale UI-voorbeelden, zonder netwerkverbinding of echte externe spelers; binnengaan opent de bijbehorende lokale demo. Alleen Free for All heeft medespelers in de simulatie: vier bots.
+
+In **Zelf game maken** kies je **Code bewerken**. Letters, Enter, Tab en Backspace bewerken het concept; de pijlen verplaatsen de cursor. **Ctrl+S** bewaart het concept binnen deze sessie en sluit de editorinvoer; **Esc** stopt alleen het bewerken. Je kunt ook **Concept bewaren** kiezen. **Code resetten** herstelt de voorbeeldtekst. Menuletters zoals M en Q worden tijdens het typen gewone code. Deze concepteditor schrijft geen bestanden en start of compileert geen code.
 
 De spelindeling volgt het wireframe: **healthbar, XP, kills, aantal skill-upgrades en vier gesegmenteerde upgradebalken links**, met daaronder een **live leaderboard op kills**. **Chat staat rechts.** Het speelveld gebruikt alle overige breedte en de volledige hoogte, met slechts één statusregel. In Free for All zijn statistieken en leaderboard gekoppeld aan de echte simulatie en koop je upgrades direct met **1–4**, zonder eerst U te drukken. De andere demo's hebben geen HP-/XP-systeem: daar staat `--`. Level 1 toont wel het aantal verslagen monsters.
 
-**T** opent global chat, **Y** teamchat, zowel tijdens het spelen als in de lobby. Typ een bericht en verstuur met **Enter**; **Esc** annuleert de invoer. Kanalen hebben een afzonderlijke lokale geschiedenis. Lobbychat en gamechat zijn gescheiden; bij terugkeer vanuit dezelfde game blijft de lobbygeschiedenis zichtbaar, terwijl een nieuwe kamer met een lege chat begint. Toetsen in de chat bewegen je personage niet en sluiten het spel niet af. Er is nog geen netwerkbezorging. Tijdens het spelen gaat **Esc** buiten de chat naar de lobby en **M** naar het hoofdmenu. Vanuit de lobby gaat **Esc** buiten de chat naar het hoofdmenu. Opnieuw starten vanuit een lobby begint een verse demo. **Q** sluit af tijdens het spelen; kies **Afsluiten** in het hoofdmenu. **Ctrl+C/D** sluit overal af.
+**T** opent global chat, **Y** teamchat, zowel tijdens het spelen als in de lobby. Typ een bericht en verstuur met **Enter**; **Esc** annuleert de invoer. Kanalen hebben een afzonderlijke lokale geschiedenis. Lobbychat en gamechat zijn gescheiden; bij terugkeer vanuit dezelfde game blijft de lobbygeschiedenis zichtbaar, terwijl een nieuwe kamer met een lege chat begint. Toetsen in de chat bewegen je personage niet en sluiten het spel niet af. Er is nog geen netwerkbezorging. Tijdens het spelen gaat **Esc** buiten de chat naar de lobby en **M** naar het hoofdmenu. Vanuit de lobby gaan **Lobby verlaten** en **Esc** buiten de chat naar de homepage. Opnieuw starten of binnengaan vanuit een lobby opent een verse lokale demo; echt hervatten is nog niet aangesloten. **Q** sluit af tijdens het spelen en op de homepage. **Ctrl+C/D** sluit overal af.
 
 De interface benut de beschikbare terminalafmetingen; de oude limiet van 240×100 schermcellen is verwijderd. Vanaf **80×22 gebruikte cellen** verschijnen beide zijpanelen. De zijbalken nemen elk ongeveer een zevende van de breedte in, met maximaal 30 cellen per kant; het spel krijgt de rest. In een smaller venster staan statistieken onderaan en verschijnt chat als invoerpaneel. Het menu past vanaf 64×22 gebruikte cellen. Alleen de laatste terminalkolom en -rij worden vrijgehouden om automatisch doorschuiven te voorkomen. **140×40** is een prettig startformaat; vergroten geeft daadwerkelijk meer speelveld. Voor de vergelijking van drie 32×32-sprites met zijpanelen is ongeveer **180×56** prettig.
 
-**Demo selecteren:** de nummers in de technische beschrijvingen hieronder verwijzen naar de gamekeuze bij **Nieuwe game aanmaken**. Cijfertoetsen wisselen tijdens het spelen niet meer van demo; **1–4** zijn gereserveerd voor FFA-upgrades. De amber pedit5-demo is nu de tiende keuze.
+**Demo selecteren:** de nummers in de technische beschrijvingen hieronder verwijzen naar de gamekeuze bij **Game aanmaken**. Cijfertoetsen wisselen tijdens het spelen niet meer van demo; **1–4** zijn gereserveerd voor FFA-upgrades. De amber pedit5-demo is nu de tiende keuze.
 
 ## Diagonaal lopen en tegelijk aanvallen
 
@@ -129,7 +141,7 @@ De wereld is **240×100 tekencellen**. Een camera volgt jouw speler en vult het 
 | **R** | Volledig nieuw spel; alle voortgang wissen |
 | **M** / Esc / **Q** | Hoofdmenu / lobby / afsluiten |
 
-Met 1–4 koop je direct een upgrade, ook zonder geopend upgrademenu. Kies een andere demo via M en Nieuwe game aanmaken. Gevechten lopen tijdens het upgrademenu, de ranglijst en chat door. Je begint met een zichtbaar zwaard; het oppakken en wisselen van wapens blijft een onderdeel van level 1.
+Met 1–4 koop je direct een upgrade, ook zonder geopend upgrademenu. Kies een andere demo via M en Game aanmaken. Gevechten lopen tijdens het upgrademenu, de ranglijst en chat door. Je begint met een zichtbaar zwaard; het oppakken en wisselen van wapens blijft een onderdeel van level 1.
 
 ### Monsters en upgrades
 
@@ -332,7 +344,8 @@ Stuur in een multiplayergame logische speltoestand/posities over het netwerk en 
 | Klasse | Verantwoordelijkheid |
 |---|---|
 | `Main` | Schermroutes, spelinterface, invoer, demo's en formaatwissels |
-| `GameMenu` | Titelscherm, hoofdmenu, gamekeuze, voorbeeldsaves, lobby en agentprofielen |
+| `GameMenu` | Homepage, roomgegevens, joinstatus, lege savetoestand, lobby en agentprofielen |
+| `GameDraft` | Bewerkbare conceptcode en bewaren binnen de sessie; geen code-uitvoering |
 | `MenuStyle` | Gedeelde retrostijl, kleuren, panelen, balken en menukeuzes |
 | `PixelTitle` | Eigen schaalbaar GLYPH-pixelletterlogo; verticale beweging wordt door het titelscherm gestuurd |
 | `GameLayout` / `GameHud` | Schermvullende driedeling, healthbar, skillbalken en live leaderboard |
@@ -363,7 +376,7 @@ mvn '-Dmaven.repo.local=.cache/maven' test
 
 De automatische tests controleren de drie pixelstrategieën, transparantie (ook gedeeltelijk en bij oneven hoogtes), PNG-decoding, afmetingen/aspectratio, ongeldige invoer, clipping, obstakels, schermverschillen zonder wisactie en beweging in alle tien demo's op alle drie formaten. Voor het pedit5-personage controleren ze ook de amberkleur, transparante gaten, stabiele bovenlichaamcontouren en verschillende beenposes. Ze vereisen geen echte terminal. De interactieve Windows-controle moet daarnaast de native invoer en herstelinstellingen toetsen: start de JAR, open het hoofdmenu met een willekeurige toets, maak met WASD/pijlen en Enter een eigen lobby aan en start als host. Beweeg met WASD, probeer de chat met T/Y, kies via het hoofdmenu andere demo's, wissel formaat en sluit af met Q of Ctrl+C.
 
-`GameMenuTest` controleert de volledige route naar alle tien demo's, direct starten als host, blokkeren van startopdrachten voor gasten, rolbehoud bij terugnavigatie, het wissen van oude startopdrachten bij kamerwissels, voorbeeldsaves en kamers, agentprofielen, directe upgrades en vensterverkleining. Chatcontroles toetsen kanaalscheiding, wissen en annuleren, de invoerlimiet en het afvangen van bewegings-, menu-, start- en afsluittoetsen.
+`GameMenuTest` controleert de vijf homepageacties, gekleurde joinstatuscirkels, alle gamegegevens, blokkeren van volle games, instappen bij In Game zonder host-startopdracht, de route naar alle tien demo's, hostrechten, rolbehoud, agentprofielen, de lege savetoestand, conceptcode, directe upgrades en resizing. `GameDraftTest` controleert bewerken, cursorbeweging, bewaren, resetten en de invoerlimiet. Chatcontroles toetsen kanaalscheiding, wissen en annuleren, de invoerlimiet en het afvangen van bewegings-, menu-, start- en afsluittoetsen.
 
 `FullscreenTest` controleert opgaande en neergaande logo-animatie, de vaste startprompt, daadwerkelijk gevulde speelvelden in alle tien demo's tot 320×120 cellen, extra zicht bij vergroten, behoud van voortgang bij resizing en de koppeling van leaderboard en upgradebalken met de simulatie.
 

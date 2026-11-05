@@ -6,6 +6,16 @@ import org.junit.jupiter.api.Test;
 class GameMenuTest {
     private static final long NOW = 10_000_000_000L;
     private static void enter(GameMenu menu) { menu.handle('\r'); }
+    private static void action(GameMenu menu, int action) {
+        menu.home();
+        for (int i = 0; i < action; i++) menu.handle('s');
+        enter(menu);
+    }
+    private static void joinExample(GameMenu menu, int room) {
+        action(menu, 2); // focus the active games list
+        for (int i = 0; i < room; i++) menu.handle('s');
+        enter(menu);
+    }
     private static GameMenu hostLobby() {
         GameMenu menu = new GameMenu(); menu.home(); enter(menu);
         menu.handle('s'); menu.handle('s'); enter(menu);
@@ -27,10 +37,10 @@ class GameMenuTest {
             assertFalse(menu.quitRequested());
             enter(menu); assertEquals(GameMenu.Screen.CREATE, menu.screen());
             while (menu.game() != mode) menu.handle(TerminalKeys.RIGHT);
-            menu.handle('s'); menu.handle('d'); // select multiplayer
+            menu.handle('s'); menu.handle('d'); // change open/closed access
             menu.handle(TerminalKeys.DOWN); enter(menu);
             assertEquals(GameMenu.Screen.LOBBY, menu.screen());
-            assertTrue(rows(menu.frame(100, 30)).contains("Multiplayer-UI"));
+            assertTrue(rows(menu.frame(100, 30)).contains("Spelstatus: In Lobby"));
             assertTrue(menu.isHost());
             assertFalse(rows(menu.frame(64, 22)).contains("GEREED"));
             enter(menu); // host starts immediately
@@ -38,77 +48,100 @@ class GameMenuTest {
             assertEquals(mode, menu.takeStartRequest()); assertEquals(0, menu.takeStartRequest());
         }
     }
-    @Test void savesAndExampleRoomsOpenTheirOwnLobbyAndAgentSelectionIsRemembered() {
-        for (int index = 0; index < 3; index++) {
-            GameMenu menu = new GameMenu(); menu.handle(' ');
-            for (int i = 0; i < 5; i++) menu.handle('s');
-            enter(menu); assertEquals(GameMenu.Screen.AGENT, menu.screen());
-            menu.handle('s'); enter(menu); // defender
-            menu.handle('s'); menu.handle('s'); enter(menu); // save profile
-            assertEquals(GameMenu.Screen.HOME, menu.screen());
-            assertTrue(rows(menu.frame(100, 30)).contains("Profiel: Verdediger"));
-            menu.home();
-            menu.handle('s'); enter(menu); // saves
-            for (int i = 0; i < index; i++) menu.handle('s');
-            enter(menu);
-            assertEquals(new int[]{2, 1, 5}[index], menu.game());
-            assertTrue(rows(menu.frame(100, 30)).contains("Voorbeeldsave"));
-            assertTrue(rows(menu.frame(100, 30)).contains("Agent: Verdediger"));
-            assertFalse(rows(menu.frame(100, 30)).contains("EIGEN AGENT"));
-            assertTrue(menu.isHost());
-            enter(menu);
-            assertEquals(new int[]{2, 1, 5}[index], menu.takeStartRequest());
-            menu.lobby();
-            menu.handle(27); // home
-            for (int i = 0; i < index + 2; i++) menu.handle(TerminalKeys.DOWN);
-            enter(menu);
-            assertEquals(GameMenu.Screen.LOBBY, menu.screen());
-            assertEquals(new int[]{2, 1, 5}[index], menu.game());
-            assertFalse(menu.isHost());
-            enter(menu);
-            assertEquals(0, menu.takeStartRequest());
-            assertEquals(GameMenu.Screen.LOBBY, menu.screen());
-        }
+    @Test void homepageHasFiveActionsAndSaveScreenDoesNotPretendToResumeProgress() {
+        GameMenu menu = new GameMenu(); menu.home();
+        String home = rows(menu.frame(112, 26));
+        for (String label : new String[]{"GAME AANMAKEN", "GAME SAVE LADEN", "DEELNEMEN AAN BESTAANDE GAME", "AGENT CONFIGUREREN", "ZELF GAME MAKEN"})
+            assertTrue(home.contains(label));
+        action(menu, 1);
+        assertEquals(GameMenu.Screen.SAVES, menu.screen());
+        assertTrue(rows(menu.frame(64, 22)).contains("Geen opgeslagen games gevonden."));
+        enter(menu);
+        assertEquals(GameMenu.Screen.HOME, menu.screen());
+        assertEquals(0, menu.takeStartRequest());
+        action(menu, GameMenu.AGENT_ACTION);
+        menu.handle('s'); enter(menu); // defender
+        menu.handle('s'); menu.handle('s'); enter(menu); // save / back
+        assertEquals(GameMenu.Screen.HOME, menu.screen());
+        assertTrue(rows(menu.frame(112, 26)).contains("Profiel: Verdediger"));
+        joinExample(menu, 0);
+        assertTrue(rows(menu.frame(64, 22)).contains("Agent: Verdediger"));
+        assertFalse(rows(menu.frame(64, 22)).contains("EIGEN AGENT"));
     }
     @Test void guestsCannotStartThroughEnterNavigationOrReturningToLobbyAndCreatingMakesThemHost() {
-        for (int room = 0; room < 3; room++) {
-            GameMenu menu = new GameMenu(); menu.home();
-            for (int i = 0; i < room + 2; i++) menu.handle('s');
+        GameMenu menu = new GameMenu(); joinExample(menu, 0);
+        String lobby = rows(menu.frame(64, 22));
+        assertFalse(menu.isHost());
+        assertTrue(lobby.contains("JIJ / SPELER"));
+        assertTrue(lobby.contains("Host: Rook"));
+        assertTrue(lobby.contains("SPELERS / 5"));
+        for (String name : new String[]{"Rook", "Nyx", "Bram", "Iris"}) assertTrue(lobby.contains(name));
+        assertTrue(lobby.contains("WACHT OP HOST"));
+        assertFalse(lobby.contains("GAME STARTEN"));
+        assertFalse(lobby.contains("GEREED"));
+        for (int attempt = 0; attempt < 5; attempt++) {
             enter(menu);
-            String lobby = rows(menu.frame(64, 22));
-            assertFalse(menu.isHost());
-            assertTrue(lobby.contains("JIJ / SPELER"));
-            assertTrue(lobby.contains("Host: " + new String[]{"Rook", "Nora", "Bo"}[room]));
-            assertTrue(lobby.contains("WACHT OP HOST"));
-            assertFalse(lobby.contains("GAME STARTEN"));
-            assertFalse(lobby.contains("GEREED"));
-            for (int attempt = 0; attempt < 5; attempt++) {
-                enter(menu);
-                assertEquals(0, menu.takeStartRequest());
-                assertEquals(GameMenu.Screen.LOBBY, menu.screen());
-                menu.handle('\t'); menu.handle('\t'); menu.handle('\t');
-            }
-            menu.lobby(); enter(menu);
-            assertFalse(menu.isHost());
             assertEquals(0, menu.takeStartRequest());
-            // Leaving and creating a new room grants host rights for that new room only.
-            menu.handle('w'); enter(menu); // wrapped to leave
-            assertEquals(GameMenu.Screen.HOME, menu.screen());
-            enter(menu); menu.handle('s'); menu.handle('s'); enter(menu);
-            assertTrue(menu.isHost());
-            int game = menu.game();
-            enter(menu);
-            assertEquals(game, menu.takeStartRequest());
-            assertEquals(GameMenu.Screen.PLAY, menu.screen());
+            assertEquals(GameMenu.Screen.LOBBY, menu.screen());
+            menu.handle('\t'); menu.handle('\t'); menu.handle('\t');
         }
-        GameMenu menu = hostLobby(); enter(menu); // leave an unconsumed host command
-        menu.home(); menu.handle('s'); menu.handle('s'); enter(menu); // join as guest
+        menu.lobby(); enter(menu);
+        assertFalse(menu.isHost());
+        assertEquals(0, menu.takeStartRequest());
+        // Leaving and creating a new room grants host rights for that new room only.
+        menu.handle('w'); enter(menu); // wrapped to leave
+        assertEquals(GameMenu.Screen.HOME, menu.screen());
+        enter(menu); menu.handle('s'); menu.handle('s'); enter(menu);
+        assertTrue(menu.isHost());
+        int game = menu.game();
+        enter(menu);
+        assertEquals(game, menu.takeStartRequest());
+        assertEquals(GameMenu.Screen.PLAY, menu.screen());
+        menu = hostLobby(); enter(menu); // leave an unconsumed host command
+        joinExample(menu, 0);
         assertFalse(menu.isHost());
         assertEquals(0, menu.takeStartRequest(), "Een startopdracht mag niet naar een andere lobby lekken");
     }
+    @Test void joinStatusUsesColoredCirclesAndRunningGamesCanBeOpenOrClosed() {
+        GameMenu menu = new GameMenu(); menu.home();
+        Canvas frame = menu.frame(64, 22);
+        int green = 0, red = 0;
+        for (int y = 0; y < frame.height(); y++) for (int x = 0; x < frame.width(); x++) {
+            Cell cell = frame.get(x, y);
+            if (cell.glyph() == '\u25cf' && cell.foreground() == MenuStyle.AVAILABLE) green++;
+            if (cell.glyph() == '\u25cf' && cell.foreground() == MenuStyle.UNAVAILABLE) red++;
+        }
+        assertEquals(2, green); assertEquals(1, red);
+        String text = rows(frame);
+        assertTrue(text.contains("Free for All | Spelers: 4/8 | In Lobby"));
+        assertTrue(text.contains("ASCII Adventure | Spelers: 2/4 | In Game"));
+        assertTrue(text.contains("Weapon Lab | Spelers: 2/2 | In Game"));
+        joinExample(menu, 2);
+        assertEquals(GameMenu.Screen.HOME, menu.screen());
+        assertTrue(rows(menu.frame(112, 26)).contains("Niet toegankelijk"));
+        assertEquals(0, menu.takeStartRequest()); assertEquals(0, menu.takeJoinRequest());
+    }
+    @Test void guestEntersRunningGameWithoutEverIssuingAHostStartCommand() {
+        GameMenu menu = new GameMenu(); joinExample(menu, 1);
+        assertEquals(GameMenu.Screen.LOBBY, menu.screen());
+        String lobby = rows(menu.frame(64, 22));
+        assertTrue(lobby.contains("SPELERS / 3"));
+        assertTrue(lobby.contains("Nora [HOST]")); assertTrue(lobby.contains("Teun"));
+        assertTrue(lobby.contains("Spelstatus: In Game"));
+        assertTrue(lobby.contains("GAME BINNENGAAN"));
+        assertFalse(menu.isHost());
+        enter(menu);
+        assertEquals(GameMenu.Screen.PLAY, menu.screen());
+        assertEquals(0, menu.takeStartRequest());
+        assertEquals(1, menu.takeJoinRequest()); assertEquals(0, menu.takeJoinRequest());
+        menu.lobby(); assertFalse(menu.isHost());
+        enter(menu); assertEquals(0, menu.takeStartRequest()); assertEquals(1, menu.takeJoinRequest());
+    }
     @Test void menuNavigationWrapsAndEscapeReturnsToTheParent() {
         GameMenu menu = new GameMenu(); menu.handle(' ');
-        menu.handle(TerminalKeys.UP); enter(menu); assertTrue(menu.quitRequested());
+        menu.handle(TerminalKeys.UP); enter(menu); // wraps to last, closed room
+        assertFalse(menu.quitRequested());
+        menu.handle('q'); assertTrue(menu.quitRequested());
         menu = new GameMenu(); menu.handle(' '); enter(menu);
         menu.handle('a'); assertEquals(1, menu.game());
         menu.handle('a'); assertEquals(10, menu.game());
@@ -116,12 +149,12 @@ class GameMenuTest {
     }
     @Test void agentEditorReturnsToHomeAndRemembersTheChosenProfileWhenReopened() {
         GameMenu menu = new GameMenu(); menu.home();
-        for (int i = 0; i < 5; i++) menu.handle('s');
+        for (int i = 0; i < GameMenu.AGENT_ACTION; i++) menu.handle('s');
         enter(menu);
         menu.handle('s'); menu.handle('s'); enter(menu); // hunter
         menu.handle(27);
         assertEquals(GameMenu.Screen.HOME, menu.screen());
-        assertTrue(rows(menu.frame(64, 22)).contains("Profiel: Jager"));
+        assertTrue(rows(menu.frame(112, 26)).contains("Profiel: Jager"));
         enter(menu); // focus returned to the agent button
         assertEquals(GameMenu.Screen.AGENT, menu.screen());
         assertTrue(rows(menu.frame(100, 30)).contains("[X] Jager"));
@@ -129,8 +162,7 @@ class GameMenuTest {
         assertEquals(GameMenu.Screen.HOME, menu.screen());
     }
     @Test void lobbyChatButtonCapturesNavigationAndEscapeOnlyClosesTheDraft() {
-        GameMenu menu = new GameMenu(); menu.home();
-        menu.handle('s'); menu.handle('s'); enter(menu); // Open Arena
+        GameMenu menu = new GameMenu(); joinExample(menu, 0);
         menu.handle('s'); enter(menu); // chat button
         assertTrue(rows(menu.frame(64, 22)).contains("CHAT ACTIEF"));
         for (char key : "wasd qrm 123".toCharArray()) menu.handle(key);
@@ -169,7 +201,7 @@ class GameMenuTest {
         menu.lobby();
         assertTrue(rows(menu.frame(64, 22)).contains("JIJ: Hallo lobby"));
         menu.handle(27); // home
-        menu.handle('s'); menu.handle('s'); menu.handle('s'); enter(menu); // different room
+        joinExample(menu, 1);
         assertFalse(rows(menu.frame(64, 22)).contains("JIJ: Hallo lobby"));
     }
     @Test void applicationLobbyChatIsSeparateFromGameChatAndCannotStartGameWhileTyping() throws Exception {
@@ -220,16 +252,43 @@ class GameMenuTest {
             }
         }
         GameMenu menu = new GameMenu(); menu.handle(' ');
-        for (int target = 0; target < 6; target++) {
-            menu.home();
-            for (int i = 0; i < target; i++) menu.handle('s');
-            enter(menu);
+        for (int target = 0; target < GameMenu.HOME_ACTIONS; target++) {
+            action(menu, target);
             for (int[] size : sizes) assertDoesNotThrow(() -> menu.frame(size[0], size[1]));
-            if (menu.screen() == GameMenu.Screen.LOBBY) {
-                menu.handle('t');
+            if (menu.screen() == GameMenu.Screen.CUSTOM) {
+                enter(menu);
                 for (int[] size : sizes) assertDoesNotThrow(() -> menu.frame(size[0], size[1]));
             }
         }
+        joinExample(menu, 0); menu.handle('t');
+        for (int[] size : sizes) assertDoesNotThrow(() -> menu.frame(size[0], size[1]));
+    }
+    @Test void customGameConceptAcceptsLiteralMenuKeysAndReturnsToHomepageAfterSaving() {
+        GameMenu menu = new GameMenu(); action(menu, GameMenu.CUSTOM_ACTION);
+        assertEquals(GameMenu.Screen.CUSTOM, menu.screen());
+        enter(menu); // edit source
+        for (char key : " qwasdm123".toCharArray()) menu.handle(key);
+        assertEquals(GameMenu.Screen.CUSTOM, menu.screen());
+        assertFalse(menu.quitRequested());
+        assertTrue(rows(menu.frame(112, 26)).contains("qwasdm123"));
+        menu.handle(19); // Ctrl+S saves concept and ends editing
+        assertTrue(rows(menu.frame(112, 26)).contains("Concept bewaard"));
+        menu.handle(27);
+        assertEquals(GameMenu.Screen.HOME, menu.screen());
+        enter(menu); // focus restored to Zelf game maken
+        assertEquals(GameMenu.Screen.CUSTOM, menu.screen());
+        assertTrue(rows(menu.frame(112, 26)).contains("qwasdm123"));
+        assertEquals(0, menu.takeStartRequest()); assertEquals(0, menu.takeJoinRequest());
+    }
+    @Test void fullApplicationCanJoinAnOpenRunningExampleThroughItsLobby() throws Exception {
+        Main app = new Main(null, "test", 16);
+        app.handle(' '); app.handle('s'); app.handle('s'); app.handle('\r'); // join button -> list
+        app.handle('s'); app.handle('\r'); // running Adventure Room
+        assertTrue(rows(app.frame(80, 24, NOW, "")).contains("GAME BINNENGAAN"));
+        app.handle('\r');
+        assertTrue(rows(app.frame(140, 38, NOW, "")).contains("CHAT / GLOBAL"));
+        app.handle(27);
+        assertTrue(rows(app.frame(80, 24, NOW, "")).contains("JIJ / SPELER"));
     }
     @Test void upgradesCanBePurchasedWithoutOpeningTheShop() {
         FreeForAll world = new FreeForAll(NOW, false); world.player().totalXp = 40;

@@ -68,13 +68,14 @@ public final class Main {
         System.out.println("java --enable-native-access=ALL-UNNAMED -jar target/terminal-sprite-lab.jar [--png pad.png] [--size 8|16|32]");
         System.out.println("Startscherm: elke toets | Menu's: WASD/pijlen + Enter | Esc: terug");
         System.out.println("Hoofdmenu: Agent configureren | Lobby: T/Y chat of Chat openen | Enter versturen | Esc annuleren");
-        System.out.println("Nieuwe game: kies uit tien demo's en single-/multiplayer; alleen de host kan vanuit de lobby starten.");
+        System.out.println("Homepage: Game aanmaken | Game save laden | Deelnemen | Agent configureren | Zelf game maken");
+        System.out.println("Alleen de host start een game. Gasten kunnen een toegankelijke game met status In Game binnengaan.");
         System.out.println("Spel: T global chat | Y teamchat | Esc lobby | M hoofdmenu | Q stop | Ctrl+C/D altijd afsluiten");
         System.out.println("WASD vasthouden/combineren: ook diagonaal lopen | Pijlen: tegelijk recht aanvallen (Windows Terminal)");
         System.out.println("+/-: formaat | B: achtergrond | P: animatie | R: opnieuw");
         System.out.println("Level 1: E pakken/kist openen | F wapen wisselen | Spatie aanvallen | R level opnieuw");
         System.out.println("Demo 2 FFA: WASD lopen | pijlen aanvallen | 1-4 direct upgraden | U overzicht | Tab ranglijst | Enter respawn");
-        System.out.println("Servers, saves en agentcode zijn UI-prototypes; chat is lokaal. Schermvullend speelveld; zijpanelen vanaf 80x22.");
+        System.out.println("Lokale UI-demo: games/chat zijn lokaal, saves zijn nog niet aangesloten, conceptcode wordt niet uitgevoerd.");
         System.out.println("Demo 4: 15 ASCII-monsters | Demo 5: E wapens pakken, F wisselen, pijlen/Spatie aanvallen, V bereik");
     }
     private void run() throws IOException {
@@ -283,6 +284,7 @@ public final class Main {
             menus.handle(input);
             if (menus.quitRequested()) running = false;
             int start = menus.takeStartRequest();
+            if (start == 0) start = menus.takeJoinRequest();
             if (start != 0) openDemo(start);
             return;
         }
