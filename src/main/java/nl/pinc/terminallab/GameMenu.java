@@ -5,32 +5,42 @@ import java.util.List;
 /** Prototype front end: rooms and saves are explicitly sample data, never network state. */
 final class GameMenu {
     enum Screen { TITLE, HOME, CREATE, SAVES, LOBBY, AGENT, PLAY }
+    enum LobbyRole { HOST, GUEST }
     static final String[] GAMES = {"ASCII Adventure", "Free for All",
         "Unicode Playground", "Monster Gallery", "Weapon Lab",
         "Foreground Pixels", "Background Pixels", "Halfblock Pixels",
         "Renderer Comparison", "Amber Adventure"};
-    private record Room(String name, int game, String detail) { }
+    private record Room(String name, int game, String detail, String host) { }
     private static final List<Room> ROOMS = List.of(
-        new Room("Open Arena", 2, "1 speler + 4 bots | Free for All"),
-        new Room("Adventure Room", 1, "1 speler | ASCII-avontuur"),
-        new Room("Weapon Sandbox", 5, "1 speler | Wapens testen"));
+        new Room("Open Arena", 2, "1 speler + 4 bots | Free for All", "Rook"),
+        new Room("Adventure Room", 1, "2 voorbeeldspelers | ASCII-avontuur", "Nora"),
+        new Room("Weapon Sandbox", 5, "2 voorbeeldspelers | Wapens testen", "Bo"));
     private Screen screen = Screen.TITLE;
     private int selected, game = 2, strategy, startRequest;
-    private boolean multiplayer, ready, quit;
+    private boolean multiplayer, quit;
+    private LobbyRole lobbyRole = LobbyRole.HOST;
+    private String hostName = "JIJ";
+    private GameChat lobbyChat = new GameChat();
     private String roomName = "Nieuwe sessie", origin = "Nieuwe sessie";
     Screen screen() { return screen; }
     int game() { return game; }
     boolean quitRequested() { return quit; }
     String roomName() { return roomName; }
-    void playing(int mode) { game = mode; screen = Screen.PLAY; }
-    void home() { screen = Screen.HOME; selected = 0; }
-    void lobby() { screen = Screen.LOBBY; selected = 2; ready = false; }
+    boolean isHost() { return lobbyRole == LobbyRole.HOST; }
+    void playing(int mode) { lobbyChat.close(); game = mode; screen = Screen.PLAY; }
+    void home() { lobbyChat.close(); screen = Screen.HOME; selected = 0; startRequest = 0; }
+    void lobby() { lobbyChat.close(); screen = Screen.LOBBY; selected = 0; startRequest = 0; }
+    private void joinLobby(LobbyRole role, String host) {
+        lobbyRole = role; hostName = host;
+        lobbyChat = new GameChat(); screen = Screen.LOBBY; selected = 0; startRequest = 0;
+    }
     int takeStartRequest() { int request = startRequest; startRequest = 0; return request; }
     void handle(int input) {
         if (screen == Screen.TITLE) { home(); return; }
+        if (screen == Screen.LOBBY && lobbyChat.handle(input)) return;
         int key = Character.toLowerCase(input);
         if (key == 27 || key == 'm') {
-            if (screen == Screen.AGENT) { screen = Screen.LOBBY; selected = 1; }
+            if (screen == Screen.AGENT) { home(); selected = 5; }
             else home();
             return;
         }
@@ -38,7 +48,7 @@ final class GameMenu {
         if (screen == Screen.CREATE && selected < 2 && (key == 'a' || key == 'd' || key == TerminalKeys.LEFT || key == TerminalKeys.RIGHT)) {
             changeSetting(key == 'a' || key == TerminalKeys.LEFT ? -1 : 1); return;
         }
-        int count = switch (screen) { case HOME -> 6; case CREATE, SAVES, LOBBY, AGENT -> 4; default -> 1; };
+        int count = switch (screen) { case HOME -> 7; case LOBBY -> 3; case CREATE, SAVES, AGENT -> 4; default -> 1; };
         if (key == 'w' || key == 'a' || key == TerminalKeys.UP || key == TerminalKeys.LEFT)
             selected = Math.floorMod(selected - 1, count);
         else if (key == 's' || key == 'd' || key == TerminalKeys.DOWN || key == TerminalKeys.RIGHT || key == '\t')
@@ -54,34 +64,34 @@ final class GameMenu {
             case HOME -> {
                 if (selected == 0) { screen = Screen.CREATE; selected = 0; }
                 else if (selected == 1) { screen = Screen.SAVES; selected = 0; }
-                else if (selected == 5) quit = true;
+                else if (selected == 5) { screen = Screen.AGENT; selected = strategy; }
+                else if (selected == 6) quit = true;
                 else {
                     Room room = ROOMS.get(selected - 2); game = room.game; roomName = room.name;
-                    multiplayer = true; origin = "Voorbeeldkamer / lokaal"; ready = false; screen = Screen.LOBBY; selected = 0;
+                    multiplayer = true; origin = "Voorbeeldkamer / lokaal"; joinLobby(LobbyRole.GUEST, room.host);
                 }
             }
             case CREATE -> {
                 if (selected < 2) changeSetting(1);
                 else if (selected == 3) home();
-                else { roomName = "Mijn game"; origin = "Nieuwe sessie"; ready = false; screen = Screen.LOBBY; selected = 0; }
+                else { roomName = "Mijn game"; origin = "Nieuwe sessie"; joinLobby(LobbyRole.HOST, "JIJ"); }
             }
             case SAVES -> {
                 if (selected == 3) home();
                 else {
                     game = new int[]{2, 1, 5}[selected]; multiplayer = false;
                     roomName = new String[]{"Save: Arena", "Save: Adventure", "Save: Weapon Lab"}[selected];
-                    origin = "Voorbeeldsave / start een verse demo"; ready = false; screen = Screen.LOBBY; selected = 0;
+                    origin = "Voorbeeldsave / start een verse demo"; joinLobby(LobbyRole.HOST, "JIJ");
                 }
             }
             case LOBBY -> {
-                if (selected == 0) ready = !ready;
-                else if (selected == 1) { screen = Screen.AGENT; selected = strategy; }
-                else if (selected == 2 && ready) { startRequest = game; screen = Screen.PLAY; }
-                else if (selected == 3) home();
+                if (selected == 0 && isHost()) { startRequest = game; screen = Screen.PLAY; }
+                else if (selected == 1) lobbyChat.handle('t');
+                else if (selected == 2) home();
             }
             case AGENT -> {
                 if (selected < 3) strategy = selected;
-                else { screen = Screen.LOBBY; selected = 1; }
+                else { home(); selected = 5; }
             }
             default -> { }
         }
@@ -94,8 +104,18 @@ final class GameMenu {
             MenuStyle.text(c, 1, 1, w - 2, "GLYPH ENGINE | Minimaal 64x22", MenuStyle.AMBER); return c;
         }
         if (screen == Screen.TITLE) { title(c, now); return c; }
+        // Keep controls together even in a maximized terminal. Extra space stays outside the page.
+        int pageWidth = Math.min(w, 112);
+        int pageHeight = Math.min(h, screen == Screen.HOME || screen == Screen.LOBBY ? 22 : 26);
+        Canvas page = MenuStyle.canvas(pageWidth, pageHeight);
+        menuFrame(page);
+        c.blit(page, (w - pageWidth) / 2, Math.min(2, h - pageHeight));
+        return c;
+    }
+    private void menuFrame(Canvas c) {
+        int w = c.width(), h = c.height();
         MenuStyle.fill(c, 0, 0, w, 3, MenuStyle.PANEL);
-        MenuStyle.text(c, 2, 1, w - 4, "GLYPH ENGINE / " + switch (screen) {
+        MenuStyle.text(c, 2, 1, w >= 100 ? w - 28 : w - 4, "GLYPH ENGINE / " + switch (screen) {
             case HOME -> "GAME BROWSER"; case CREATE -> "NIEUWE GAME"; case SAVES -> "SAVES";
             case LOBBY -> "LOBBY / " + roomName; case AGENT -> "AGENT EDITOR"; default -> "";
         }, MenuStyle.INK);
@@ -109,8 +129,11 @@ final class GameMenu {
             default -> { }
         }
         MenuStyle.fill(c, 0, h - 1, w, 1, MenuStyle.LINE);
-        MenuStyle.text(c, 2, h - 1, w - 4, "WASD / pijlen: kiezen    ENTER: bevestigen    ESC: terug", MenuStyle.INK);
-        return c;
+        String hint = screen == Screen.LOBBY
+            ? lobbyChat.editing() ? "CHAT ACTIEF | Enter: versturen | Esc: annuleren"
+                : "WASD/pijlen kiezen | Enter bevestigen | T/Y chat | Esc terug"
+            : "WASD / pijlen: kiezen    ENTER: bevestigen    ESC: terug";
+        MenuStyle.text(c, 2, h - 1, w - 4, hint, MenuStyle.INK);
     }
     private void title(Canvas c, long now) {
         if (titleStarted == Long.MIN_VALUE) titleStarted = now;
@@ -127,33 +150,38 @@ final class GameMenu {
         MenuStyle.center(c, c.height() - 2, "GLYPH ENGINE / TERMINAL SANDBOX", MenuStyle.MUTED);
     }
     private void homeFrame(Canvas c) {
-        int w = c.width(), h = c.height();
-        if (w >= 100) {
-            int side = Math.max(28, w / 3);
-            MenuStyle.panel(c, 0, 4, side, h - 6, "SPELEN");
-            MenuStyle.text(c, 3, 6, side - 6, "Jouw terminal. Jouw wereld.", MenuStyle.MUTED);
-            MenuStyle.choice(c, 2, 9, side - 4, "NIEUWE GAME AANMAKEN", selected == 0);
-            MenuStyle.choice(c, 2, 12, side - 4, "OUDE SAVE LADEN", selected == 1);
-            MenuStyle.choice(c, 2, h - 5, side - 4, "AFSLUITEN", selected == 5);
-            MenuStyle.panel(c, side + 1, 4, w - side - 1, h - 6, "ACTIEVE GAMES / VOORBEELDSERVERS");
-            int available = h - 12;
-            for (int i = 0; i < ROOMS.size(); i++) {
-                int top = 7 + i * available / 3;
-                room(c, side + 3, top, w - side - 6, i);
-            }
+        int w = c.width();
+        if (w >= 96) {
+            int side = 32, right = side + 3, roomWidth = w - right - 1;
+            MenuStyle.card(c, 1, 4, side, 16, "SPELEN");
+            MenuStyle.text(c, 3, 6, side - 4, "Jouw terminal. Jouw wereld.", MenuStyle.MUTED);
+            MenuStyle.choice(c, 3, 8, side - 4, "NIEUWE GAME AANMAKEN", selected == 0);
+            MenuStyle.text(c, 5, 9, side - 6, "Stel een sessie in", MenuStyle.MUTED);
+            MenuStyle.choice(c, 3, 11, side - 4, "OUDE SAVE LADEN", selected == 1);
+            MenuStyle.text(c, 5, 12, side - 6, "Open een voorbeeldsave", MenuStyle.MUTED);
+            MenuStyle.choice(c, 3, 14, side - 4, "AGENT CONFIGUREREN", selected == 5);
+            MenuStyle.text(c, 5, 15, side - 6, "Profiel: " + profile(), MenuStyle.MUTED);
+            MenuStyle.choice(c, 3, 17, side - 4, "AFSLUITEN", selected == 6);
+            MenuStyle.card(c, right, 4, roomWidth, 16, "ACTIEVE GAMES / VOORBEELDSERVERS");
+            MenuStyle.text(c, right + 2, 6, roomWidth - 4, "Lokale kamers / kies een game en druk Enter", MenuStyle.MUTED);
+            for (int i = 0; i < ROOMS.size(); i++) room(c, right + 2, 8 + i * 3, roomWidth - 4, i);
+            MenuStyle.text(c, right + 2, 17, roomWidth - 4, "Je start steeds een verse demo.", MenuStyle.MUTED);
         } else {
-            MenuStyle.choice(c, 2, 4, w - 4, "NIEUWE GAME AANMAKEN", selected == 0);
-            MenuStyle.choice(c, 2, 6, w - 4, "OUDE SAVE LADEN", selected == 1);
-            MenuStyle.panel(c, 0, 8, w, h - 12, "ACTIEVE GAMES / VOORBEELDSERVERS");
-            for (int i = 0; i < ROOMS.size(); i++) room(c, 2, 9 + i * (h - 13) / 3, w - 4, i);
-            MenuStyle.choice(c, 2, h - 3, w - 4, "AFSLUITEN", selected == 5);
+            int column = (w - 6) / 2;
+            MenuStyle.card(c, 1, 4, w - 2, 6, "SPELEN");
+            MenuStyle.choice(c, 3, 6, column, "NIEUWE GAME AANMAKEN", selected == 0);
+            MenuStyle.choice(c, 4 + column, 6, w - column - 7, "OUDE SAVE LADEN", selected == 1);
+            MenuStyle.choice(c, 3, 8, column, "AGENT CONFIGUREREN", selected == 5);
+            MenuStyle.text(c, 4 + column, 8, w - column - 7, "Profiel: " + profile(), MenuStyle.MUTED);
+            MenuStyle.card(c, 1, 10, w - 2, 9, "ACTIEVE GAMES / VOORBEELDSERVERS");
+            for (int i = 0; i < ROOMS.size(); i++) room(c, 3, 12 + i * 2, w - 6, i);
+            MenuStyle.choice(c, 2, 19, w - 4, "AFSLUITEN", selected == 6);
         }
     }
     private void room(Canvas c, int x, int y, int w, int i) {
         Room room = ROOMS.get(i);
         MenuStyle.choice(c, x, y, w, "[OPEN] " + room.name, selected == i + 2);
         MenuStyle.text(c, x + 2, y + 1, w - 2, room.detail, MenuStyle.MUTED);
-        if (c.width() >= 100) MenuStyle.text(c, x + 2, y + 2, w - 2, "ENTER: naar lobby / lokale voorbeeldkamer", MenuStyle.MUTED);
     }
     private void createFrame(Canvas c) {
         int w = c.width(), h = c.height();
@@ -180,35 +208,34 @@ final class GameMenu {
         MenuStyle.choice(c, 2, h - 4, w - 4, "TERUG", selected == 3);
     }
     private void lobbyFrame(Canvas c) {
-        int w = c.width(), h = c.height();
-        int split = w >= 110 ? w * 3 / 5 : w;
-        int playersHeight = w >= 110 ? h - 6 : Math.max(8, h / 2 - 2);
-        MenuStyle.panel(c, 0, 4, split, playersHeight, "SPELERS / " + (game == 2 ? "5" : "1"));
-        MenuStyle.text(c, 3, 6, split - 6, "JIJ / HOST    " + (ready ? "[GEREED]" : "[NIET GEREED]"), MenuStyle.GREEN);
+        int w = c.width(), side = Math.max(24, Math.min(34, w / 3));
+        MenuStyle.card(c, 1, 4, side, 9, "SPELERS / " + (game == 2 ? "5" : isHost() ? "1" : "2"));
+        MenuStyle.text(c, 3, 6, side - 4, isHost() ? "JIJ / HOST" : "JIJ / SPELER", MenuStyle.INK);
+        MenuStyle.text(c, 3, 7, side - 4, isHost() ? "Jij kunt starten" : "Host: " + hostName, MenuStyle.GREEN);
         if (game == 2) {
-            if (w >= 110) {
-                String[] bots = {"Rook", "Nyx", "Bram", "Iris"};
-                for (int i = 0; i < bots.length; i++) MenuStyle.text(c, 3, 8 + i * 2, split - 6, "[BOT] " + bots[i] + "    [GEREED]", MenuStyle.INK);
-            } else MenuStyle.text(c, 3, 7, split - 6, "[BOT] Rook / Nyx / Bram / Iris [GEREED]", MenuStyle.INK);
-        }
-        int x = w >= 110 ? split + 1 : 0, cw = w - x;
-        int top = w >= 110 ? 4 : 4 + playersHeight;
-        MenuStyle.panel(c, x, top, cw, h - top - 2, "SESSIE");
-        if (w >= 110) {
-            MenuStyle.text(c, x + 2, top + 2, cw - 4, GAMES[game - 1], MenuStyle.AMBER);
-            MenuStyle.text(c, x + 2, top + 3, cw - 4, multiplayer ? "Multiplayer-UI / lokaal" : "Singleplayer", MenuStyle.MUTED);
-            MenuStyle.text(c, x + 2, top + 5, cw - 4, origin, MenuStyle.MUTED);
+            String[] bots = {"Rook", "Nyx", "Bram", "Iris"};
+            for (int i = 0; i < bots.length; i++)
+                MenuStyle.text(c, 3, 8 + i, side - 4, "[BOT] " + bots[i]
+                    + (!isHost() && bots[i].equals(hostName) ? " [HOST]" : ""), MenuStyle.INK);
+        } else if (!isHost()) {
+            MenuStyle.text(c, 3, 9, side - 4, hostName + " [HOST]", MenuStyle.INK);
         } else {
-            MenuStyle.text(c, 3, 9, w - 6, GAMES[game - 1] + " / " + (multiplayer ? "Multiplayer-UI / lokaal" : "Singleplayer"), MenuStyle.MUTED);
-            MenuStyle.text(c, 3, 10, w - 6, origin, MenuStyle.MUTED);
+            MenuStyle.text(c, 3, 10, side - 4, "Geen bots in demo", MenuStyle.MUTED);
         }
-        int start = w >= 110 ? Math.max(12, h / 2) : top + 1;
-        int gap = Math.max(1, (h - start - 4) / 3);
-        MenuStyle.choice(c, x + 1, start, cw - 2, ready ? "GEREED [X]" : "GEREED [ ]", selected == 0);
-        MenuStyle.choice(c, x + 1, start + gap, cw - 2, "EIGEN AGENT / " + new String[]{"Verkenner", "Verdediger", "Jager"}[strategy], selected == 1);
-        MenuStyle.choice(c, x + 1, start + gap * 2, cw - 2, ready ? "GAME STARTEN >>" : "STARTEN / meld je eerst gereed", selected == 2);
-        MenuStyle.choice(c, x + 1, start + gap * 3, cw - 2, "LOBBY VERLATEN", selected == 3);
+        MenuStyle.text(c, 3, 13, side - 4, "Agent: " + profile(), MenuStyle.MUTED);
+        MenuStyle.card(c, 1, 14, side, 6, "ACTIES");
+        boolean selecting = !lobbyChat.editing();
+        MenuStyle.choice(c, 3, 15, side - 4, isHost() ? "GAME STARTEN >>" : "WACHT OP HOST", selecting && selected == 0, isHost());
+        MenuStyle.choice(c, 3, 16, side - 4, "CHAT OPENEN", selecting && selected == 1);
+        MenuStyle.choice(c, 3, 17, side - 4, "LOBBY VERLATEN", selecting && selected == 2);
+        MenuStyle.text(c, 3, 18, side - 4, "Alleen de host start", MenuStyle.MUTED);
+        int x = side + 3, cw = w - x - 1;
+        MenuStyle.card(c, x, 4, cw, 5, "SESSIE / " + GAMES[game - 1]);
+        MenuStyle.text(c, x + 2, 6, cw - 4, multiplayer ? "Multiplayer-UI / lokaal" : "Singleplayer", MenuStyle.MUTED);
+        MenuStyle.text(c, x + 2, 7, cw - 4, origin.startsWith("Voorbeeldsave") ? "Voorbeeldsave / verse demo" : origin, MenuStyle.MUTED);
+        lobbyChat.drawLobby(c, x, 10, cw, 10);
     }
+    private String profile() { return new String[]{"Verkenner", "Verdediger", "Jager"}[strategy]; }
     private void agentFrame(Canvas c) {
         int w = c.width(), h = c.height(), side = Math.max(22, w / 3);
         MenuStyle.panel(c, 0, 4, side, h - 6, "PROFIEL");

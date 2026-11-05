@@ -36,6 +36,37 @@ final class GameChat {
         MenuStyle.text(c, x + 1, y + 2, w - 2, "T global / Y team", MenuStyle.MUTED);
         MenuStyle.text(c, x + 1, y + 3, w - 2, "Lokale chat", MenuStyle.MUTED);
         int lineWidth = Math.max(1, w - 2);
+        List<String> lines = wrappedLines(lineWidth);
+        int room = Math.max(0, h - 10), first = Math.max(0, lines.size() - room);
+        for (int i = first; i < lines.size(); i++) MenuStyle.text(c, x + 1, y + 5 + i - first, w - 2, lines.get(i), MenuStyle.INK);
+        if (editing) {
+            MenuStyle.text(c, x + 1, y + h - 4, w - 2, "SCHRIJVEN / " + (team ? "TEAM" : "GLOBAL"), MenuStyle.AMBER);
+            String visible = draft.substring(Math.max(0, draft.length() - Math.max(1, w - 5)));
+            MenuStyle.text(c, x + 1, y + h - 3, w - 2, "> " + visible + "_", MenuStyle.INK);
+            MenuStyle.text(c, x + 1, y + h - 2, w - 2, "Enter: zend", MenuStyle.MUTED);
+            MenuStyle.text(c, x + 1, y + h - 1, w - 2, "Esc: sluit", MenuStyle.MUTED);
+        } else {
+            MenuStyle.text(c, x + 1, y + h - 3, w - 2, "[T] global", MenuStyle.AMBER);
+            MenuStyle.text(c, x + 1, y + h - 2, w - 2, "[Y] team", MenuStyle.MUTED);
+        }
+    }
+    /** Compact chat for the lobby, with a permanent input row and a separate history per channel. */
+    void drawLobby(Canvas c, int x, int y, int w, int h) {
+        MenuStyle.card(c, x, y, w, h, "LOBBYCHAT / " + (team ? "TEAM" : "GLOBAL"));
+        MenuStyle.text(c, x + 2, y + 1, w - 4, editing
+            ? "Enter: zend | Esc: annuleer" : "Lokale chat | T global / Y team", MenuStyle.MUTED);
+        List<String> lines = wrappedLines(Math.max(1, w - 4));
+        int room = Math.max(0, h - 5), first = Math.max(0, lines.size() - room);
+        if (lines.isEmpty()) MenuStyle.text(c, x + 2, y + 2, w - 4, "Nog geen berichten.", MenuStyle.MUTED);
+        for (int i = first; i < lines.size(); i++)
+            MenuStyle.text(c, x + 2, y + 2 + i - first, w - 4, lines.get(i), MenuStyle.INK);
+        if (editing) {
+            MenuStyle.fill(c, x + 2, y + h - 2, w - 4, 1, MenuStyle.LINE);
+            String visible = draft.substring(Math.max(0, draft.length() - Math.max(1, w - 7)));
+            MenuStyle.text(c, x + 2, y + h - 2, w - 4, "> " + visible + "_", MenuStyle.INK);
+        } else MenuStyle.text(c, x + 2, y + h - 2, w - 4, team ? "[Y] Typ een teambericht" : "[T] Typ een bericht", MenuStyle.AMBER);
+    }
+    private List<String> wrappedLines(int lineWidth) {
         List<String> lines = new ArrayList<>();
         for (Message message : messages) if (message.team == team) {
             for (int at = 0; at < message.text.length();) {
@@ -49,17 +80,6 @@ final class GameChat {
                 while (at < message.text.length() && message.text.charAt(at) == ' ') at++;
             }
         }
-        int room = Math.max(0, h - 10), first = Math.max(0, lines.size() - room);
-        for (int i = first; i < lines.size(); i++) MenuStyle.text(c, x + 1, y + 5 + i - first, w - 2, lines.get(i), MenuStyle.INK);
-        if (editing) {
-            MenuStyle.text(c, x + 1, y + h - 4, w - 2, "SCHRIJVEN / " + (team ? "TEAM" : "GLOBAL"), MenuStyle.AMBER);
-            String visible = draft.substring(Math.max(0, draft.length() - Math.max(1, w - 5)));
-            MenuStyle.text(c, x + 1, y + h - 3, w - 2, "> " + visible + "_", MenuStyle.INK);
-            MenuStyle.text(c, x + 1, y + h - 2, w - 2, "Enter: zend", MenuStyle.MUTED);
-            MenuStyle.text(c, x + 1, y + h - 1, w - 2, "Esc: sluit", MenuStyle.MUTED);
-        } else {
-            MenuStyle.text(c, x + 1, y + h - 3, w - 2, "[T] global", MenuStyle.AMBER);
-            MenuStyle.text(c, x + 1, y + h - 2, w - 2, "[Y] team", MenuStyle.MUTED);
-        }
+        return lines;
     }
 }

@@ -22,9 +22,26 @@ final class MenuStyle {
         text(c, x, y, w, "-".repeat(Math.max(0, w)), LINE);
         text(c, x + 1, y, w - 2, " " + title + " ", AMBER);
     }
+    static void card(Canvas c, int x, int y, int w, int h, String title) {
+        fill(c, x, y, w, h, PANEL);
+        for (int col = 1; col < w - 1; col++) {
+            c.put(x + col, y, new Cell('-', LINE, PANEL));
+            c.put(x + col, y + h - 1, new Cell('-', LINE, PANEL));
+        }
+        for (int row = 1; row < h - 1; row++) {
+            c.put(x, y + row, new Cell('|', LINE, PANEL));
+            c.put(x + w - 1, y + row, new Cell('|', LINE, PANEL));
+        }
+        for (int col : new int[]{0, w - 1}) for (int row : new int[]{0, h - 1})
+            c.put(x + col, y + row, new Cell('+', LINE, PANEL));
+        text(c, x + 2, y, w - 4, " " + title + " ", AMBER);
+    }
     static void choice(Canvas c, int x, int y, int w, String label, boolean selected) {
+        choice(c, x, y, w, label, selected, true);
+    }
+    static void choice(Canvas c, int x, int y, int w, String label, boolean selected, boolean enabled) {
         if (selected) fill(c, x, y, w, 1, LINE);
-        text(c, x, y, w, (selected ? "> " : "  ") + label, selected ? AMBER : INK);
+        text(c, x, y, w, (selected ? "> " : "  ") + label, selected ? AMBER : enabled ? INK : MUTED);
     }
     static void center(Canvas c, int y, String s, int color) {
         text(c, Math.max(1, (c.width() - s.length()) / 2), y, c.width() - 2, s, color);

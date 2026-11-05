@@ -67,7 +67,8 @@ public final class Main {
         System.out.println("GLYPH ENGINE | Terminal Sprite Lab | Java 17+ | ANSI + UTF-8");
         System.out.println("java --enable-native-access=ALL-UNNAMED -jar target/terminal-sprite-lab.jar [--png pad.png] [--size 8|16|32]");
         System.out.println("Startscherm: elke toets | Menu's: WASD/pijlen + Enter | Esc: terug");
-        System.out.println("Nieuwe game: kies uit tien demo's en single-/multiplayer; meld je gereed in de lobby en start.");
+        System.out.println("Hoofdmenu: Agent configureren | Lobby: T/Y chat of Chat openen | Enter versturen | Esc annuleren");
+        System.out.println("Nieuwe game: kies uit tien demo's en single-/multiplayer; alleen de host kan vanuit de lobby starten.");
         System.out.println("Spel: T global chat | Y teamchat | Esc lobby | M hoofdmenu | Q stop | Ctrl+C/D altijd afsluiten");
         System.out.println("WASD vasthouden/combineren: ook diagonaal lopen | Pijlen: tegelijk recht aanvallen (Windows Terminal)");
         System.out.println("+/-: formaat | B: achtergrond | P: animatie | R: opnieuw");
