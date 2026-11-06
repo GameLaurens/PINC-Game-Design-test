@@ -40,7 +40,8 @@ public final class FreeForAllView {
         world.tick(now);
         var camera = world.camera(width, height);
         Canvas c = world.draw(camera, now, checker, animate);
-        MenuStyle.text(c, 1, 0, width - 2, "FREE FOR ALL / " + world.region(), MenuStyle.INK);
+        // Leave the outer row available for offscreen opponent indicators.
+        MenuStyle.text(c, 1, 1, width - 2, "FREE FOR ALL / " + world.region(), MenuStyle.INK);
         if (!world.player().alive()) {
             box(c, camera, List.of("JE BENT VERSLAGEN", "Startbonus: " + world.player().totalXp() + " XP", "ENTER: respawn | Esc: lobby"));
         } else if (scoreboard) {

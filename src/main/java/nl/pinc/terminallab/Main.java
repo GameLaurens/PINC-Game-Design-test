@@ -131,7 +131,16 @@ public final class Main {
             : mode == 1 && asciiLevel != null ? asciiLevel.message()
             : (mode == 4 || mode == 5) && showroom != null ? showroom.message()
             : "WASD bewegen | +/- formaat | B grond | P animatie | R reset";
-        MenuStyle.text(c, layout.left(), layout.fieldHeight(), layout.fieldWidth(), message, MenuStyle.MUTED);
+        String radarLegend = mode == 2 ? "\u25cf monster \u25cb speler | getal=groep" : "\u25cf monster | getal=groep";
+        boolean radar = (mode == 1 || mode == 2 || mode == 4 || mode == 5) && layout.fieldWidth() >= 64;
+        int messageWidth = layout.fieldWidth() - (radar ? radarLegend.length() + 3 : 0);
+        MenuStyle.text(c, layout.left(), layout.fieldHeight(), messageWidth, message, MenuStyle.MUTED);
+        if (radar) {
+            int legendX = layout.left() + layout.fieldWidth() - radarLegend.length();
+            MenuStyle.text(c, legendX, layout.fieldHeight(), radarLegend.length(), radarLegend, MenuStyle.MUTED);
+            c.text(legendX, layout.fieldHeight(), "\u25cf", EnemyIndicators.MONSTER_COLOR);
+            if (mode == 2) c.text(legendX + 10, layout.fieldHeight(), "\u25cb", EnemyIndicators.PLAYER_COLOR);
+        }
         if (layout.left() == 0 && chat.editing()) chat.draw(c, 0, Math.max(0, height - 11), width, Math.min(height, 11));
         return c;
     }

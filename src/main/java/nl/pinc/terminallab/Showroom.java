@@ -224,6 +224,11 @@ public final class Showroom {
         Canvas viewport = new Canvas(camera.width, camera.height);
         for (int row = 0; row < camera.height; row++) for (int col = 0; col < camera.width; col++)
             viewport.put(col, row, scene.get(camera.x + col, camera.y + row));
+        List<EnemyIndicators.Target> targets = weapons
+            ? List.of(new EnemyIndicators.Target(TARGET_X, TARGET_Y, Monster.GOLEM.model.width(), Monster.GOLEM.model.height(), false))
+            : exhibits.stream().map(e -> new EnemyIndicators.Target(e.x, e.y,
+                Monster.values()[e.index].model.width(), Monster.values()[e.index].model.height(), false)).toList();
+        EnemyIndicators.draw(viewport, camera.x, camera.y, x + PLAYER_WIDTH / 2, y + PLAYER_HEIGHT / 2, targets);
         return viewport;
     }
     Canvas arenaFrame(int width, int height, long now, boolean checker, boolean animate) {

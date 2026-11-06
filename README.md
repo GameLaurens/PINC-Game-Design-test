@@ -175,6 +175,16 @@ Na jouw nederlaag druk je **Enter** om op een verspreide vrije positie opnieuw t
 
 Dit is een proefopstelling met eenvoudige lokale bots. Er zijn geen andere menselijke spelers verbonden en er wordt niets opgeslagen na afsluiten of R. De FFA-simulatie staat in [`FreeForAll.java`](src/main/java/nl/pinc/terminallab/FreeForAll.java), de camera/HUD/menu's in [`FreeForAllView.java`](src/main/java/nl/pinc/terminallab/FreeForAllView.java). [`TerminalKeys.java`](src/main/java/nl/pinc/terminallab/TerminalKeys.java) voegt de escape-bytes van pijltjestoetsen samen, zodat een aanval niet per ongeluk als Esc of als WASD wordt verwerkt.
 
+## Tegenstanders buiten beeld
+
+In level 1, Free for All en beide showrooms wijzen markeringen op de rand van het **speelveld** naar tegenstanders buiten beeld. Ze volgen de richting vanaf jouw personage en werken over de hele kaart, ook achter obstakels. Bewegen en het venster vergroten/verkleinen werken de markeringen automatisch bij.
+
+- **Rood rondje `●`**: monster; in de wapenshowroom alleen de testgolem.
+- **Geel open rondje `○`**: andere speler/bot in Free for All.
+- **Cijfer 2–9**: meerdere tegenstanders op dezelfde randpositie; **`+`** betekent tien of meer. Een groep met zowel monsters als spelers is lichtblauw.
+
+Zodra een model geheel of gedeeltelijk in beeld komt, vervalt zijn randmarkering. De markeringen geven richting aan, geen afstand. Verslagen tegenstanders verdwijnen uit de markeringen; bij respawn verschijnen ze weer. Wapens en kisten krijgen geen tegenstandermarkering. De gedeelde projectie staat in [`EnemyIndicators.java`](src/main/java/nl/pinc/terminallab/EnemyIndicators.java) en gebruikt de bestaande ANSI-renderer zonder extra schermwisacties of dependencies.
+
 ## Demo 4: monstershowroom
 
 Sluit een al draaiende game met Q en start opnieuw met `.\run.cmd`. Kies **4** voor de monstershowroom of **5** voor de wapenshowroom. Als je nog het oude menu ziet, sluit dan ook die oude sessie: een draaiende Java-applicatie neemt broncodewijzigingen pas bij een nieuwe start over.

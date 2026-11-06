@@ -144,7 +144,14 @@ class ShowroomTest {
         app.demo(1, 1, 1, "");
         Canvas frame = app.demo(79, 23, 1, "");
         assertTrue(row(frame, 18).contains("Wapen: Dolk"));
-        assertAscii(frame);
+        // Models remain ASCII; the new offscreen radar is a Unicode HUD overlay.
+        for (int y = 0; y < frame.height(); y++) for (int x = 0; x < frame.width(); x++) {
+            Cell cell = frame.get(x, y);
+            if (cell.glyph() == '\u25cf') {
+                assertEquals(EnemyIndicators.MONSTER_COLOR, cell.foreground());
+                assertTrue(x == 2 || x == frame.width() - 3 || y == 4 || y == frame.height() - 7);
+            } else assertTrue(cell.glyph() >= 32 && cell.glyph() <= 126);
+        }
         app.handle('r');
         assertTrue(row(app.demo(79, 23, 1, ""), 18).contains("Wapen: geen"));
         app.openDemo(4);

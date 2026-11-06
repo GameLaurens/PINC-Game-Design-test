@@ -175,6 +175,11 @@ public final class AsciiLevel {
         width = Math.max(width, columns); height = Math.max(height, rows);
         int cameraX = Math.max(0, Math.min(width - columns, x + PLAYER_WIDTH / 2 - columns / 2));
         int cameraY = Math.max(0, Math.min(height - rows, y + PLAYER_HEIGHT / 2 - rows / 2));
-        return draw(now, checker, animate).window(cameraX, cameraY, columns, rows);
+        Canvas viewport = draw(now, checker, animate).window(cameraX, cameraY, columns, rows);
+        EnemyIndicators.draw(viewport, cameraX, cameraY, x + PLAYER_WIDTH / 2, y + PLAYER_HEIGHT / 2,
+            monsters.stream().filter(monster -> monster.health > 0)
+                .map(monster -> new EnemyIndicators.Target(monster.x, monster.y,
+                    monster.type.model.width(), monster.type.model.height(), false)).toList());
+        return viewport;
     }
 }

@@ -302,6 +302,9 @@ public final class FreeForAll {
                 }
             }
         }
+        EnemyIndicators.draw(canvas, camera.x, camera.y, player.x + player.width() / 2, player.y + player.height() / 2,
+            actors.stream().filter(actor -> actor != player && actor.alive())
+                .map(actor -> new EnemyIndicators.Target(actor.x, actor.y, actor.width(), actor.height(), actor.fighter())).toList());
         return canvas;
     }
 }
