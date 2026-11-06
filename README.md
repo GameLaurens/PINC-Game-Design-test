@@ -1,16 +1,16 @@
 # GLYPH Engine / Terminal Sprite Lab
 
-Een kleine Java-applicatie om **tien werkende, bestuurbare terminaldemo's** te vergelijken. Alles verschijnt in dezelfde terminal: ASCII, Unicode, RGB-blokken en PNG-sprites. Geen Swing/JavaFX-venster, Sixel of Kitty Graphics.
+Een kleine Java-applicatie met **elf werkende terminaldemo's**, inclusief een editor voor wapenschadegebieden. Alles verschijnt in dezelfde terminal: ASCII, Unicode, RGB-blokken en PNG-sprites. Geen Swing/JavaFX-venster, Sixel of Kitty Graphics.
 
 ## GLYPH Engine: schermvullende terminalinterface
 
-De engine heeft een eigen groot pixelletterlogo dat op het titelscherm rustig omhoog en omlaag beweegt. De retrovormgeving gebruikt gebroken wit, antraciet en gedempt rood. Dit is bewust een lokaal prototype met tien bestaande demo's.
+De engine heeft een eigen groot pixelletterlogo dat op het titelscherm rustig omhoog en omlaag beweegt. De retrovormgeving gebruikt gebroken wit, antraciet en gedempt rood. Dit is een lokaal prototype met elf demo's.
 
 Het hoofdmenu en de lobby gebruiken een compacte indeling van maximaal **112 kolommen en 22 rijen**, horizontaal gecentreerd en dicht bij de bovenkant. Knoppen en kamers hebben vaste, kleine tussenruimtes; een groter venster trekt ze niet verder uit elkaar. De lobby groepeert spelers en startacties links, met sessiegegevens en chat rechts. Je configureert je agent in het hoofdmenu. Vanaf 64×22 blijft alles zichtbaar. De overige instelschermen zijn eveneens begrensd, terwijl het speelveld de beschikbare terminalruimte blijft gebruiken.
 
 De homepage heeft vijf acties:
 
-- **Game aanmaken:** kies een van de tien bestaande gamemodes/demo's en open of gesloten toegang. Je wordt host van een lokale lobby.
+- **Game aanmaken:** kies een van de elf gamemodes/demo's en open of gesloten toegang. Je wordt host van een lokale lobby.
 - **Game save laden:** opent het savescherm. Dit toont een lege toestand: echte voortgang opslaan en hervatten is nog niet aangesloten. De oude voorbeeldsaves die een nieuw spel startten zijn verwijderd.
 - **Deelnemen aan bestaande game:** verplaatst de selectie naar het overzicht van actieve games; selecteer een game en bevestig met Enter. Op smalle terminals heet deze knop **Deelnemen aan game**.
 - **Agent configureren:** kies een gedragsprofiel in de bestaande agentinterface. Het profiel wordt binnen deze sessie onthouden; de voorbeeldcode wordt niet uitgevoerd.
@@ -21,7 +21,7 @@ Bij iedere actieve voorbeeldgame staan een **groene of rode cirkel**, de **gamem
 1. Druk op een willekeurige toets op het titelscherm om het hoofdmenu te openen.
 2. Kies eventueel **Agent configureren** in het hoofdmenu. Selecteer Verkenner, Verdediger of Jager en kies **Opslaan / terug** om terug te keren naar het hoofdmenu. Het profiel blijft tijdens deze programmasessie behouden, ook bij andere games en kamers. De codeweergave blijft een UI-voorbeeld en wordt niet uitgevoerd.
 3. Kies **Game aanmaken** met WASD of de pijlen en bevestig met **Enter**.
-4. Kies een van de **tien games** met **A/D of links/rechts**. Selecteer eronder **Open** of **Gesloten** toegang. Enter wisselt de geselecteerde instelling ook. Kies daarna **Aanmaken en naar lobby**. Hier staan jij en, bij Free for All, de vier lokale bots.
+4. Kies een van de **elf games** met **A/D of links/rechts**. Selecteer eronder **Open** of **Gesloten** toegang. Enter wisselt de geselecteerde instelling ook. Kies daarna **Aanmaken en naar lobby**. Hier staan jij en, bij Free for All, de vier lokale bots.
 5. In de lobby kun je via **Chat openen**, **T** (global) of **Y** (team) een bericht typen. **Enter** verstuurt en **Esc** annuleert het typen. Tijdens het typen worden menuacties niet uitgevoerd; versturen kan de game dus niet onbedoeld starten. De lobby toont je agentprofiel alleen ter informatie; aanpassen doe je via het hoofdmenu.
 6. Als maker van de game ben jij de **host**. Kies **Game starten** en druk Enter om direct te beginnen. Alleen de host kan een startopdracht geven; andere spelers kunnen chatten of de lobby verlaten.
 
@@ -35,11 +35,11 @@ De spelindeling volgt het wireframe: **healthbar, XP, kills, aantal skill-upgrad
 
 De interface benut de beschikbare terminalafmetingen; de oude limiet van 240×100 schermcellen is verwijderd. Vanaf **80×22 gebruikte cellen** verschijnen beide zijpanelen. De zijbalken nemen elk ongeveer een zevende van de breedte in, met maximaal 30 cellen per kant; het spel krijgt de rest. In een smaller venster staan statistieken onderaan en verschijnt chat als invoerpaneel. Het menu past vanaf 64×22 gebruikte cellen. Alleen de laatste terminalkolom en -rij worden vrijgehouden om automatisch doorschuiven te voorkomen. **140×40** is een prettig startformaat; vergroten geeft daadwerkelijk meer speelveld. Voor de vergelijking van drie 32×32-sprites met zijpanelen is ongeveer **180×56** prettig.
 
-**Demo selecteren:** de nummers in de technische beschrijvingen hieronder verwijzen naar de gamekeuze bij **Game aanmaken**. Cijfertoetsen wisselen tijdens het spelen niet meer van demo; **1–4** zijn gereserveerd voor FFA-upgrades. De amber pedit5-demo is nu de tiende keuze.
+**Demo selecteren:** de nummers in de technische beschrijvingen hieronder verwijzen naar de gamekeuze bij **Game aanmaken**. Cijfertoetsen wisselen tijdens het spelen niet meer van demo; **1–4** zijn gereserveerd voor FFA-upgrades. De amber pedit5-demo is de tiende keuze; **Weapon Range Editor** is nummer **11**.
 
 ## Diagonaal lopen en tegelijk aanvallen
 
-Gebruik een recente **Windows Terminal**, met PowerShell of cmd. Houd **W+A**, **W+D**, **S+A** of **S+D** ingedrukt om diagonaal te lopen. Dit werkt in alle tien demo's. Je kunt ondertussen in Free for All en het Weapon Lab een **pijltjestoets vasthouden om te blijven aanvallen**. In level 1 gebruik je tijdens het lopen **Spatie** voor de bestaande aanval.
+Gebruik een recente **Windows Terminal**, met PowerShell of cmd. Houd **W+A**, **W+D**, **S+A** of **S+D** ingedrukt om diagonaal te lopen. Dit werkt in de tien bewegingsdemo's. Je kunt ondertussen in Free for All en het Weapon Lab een **pijltjestoets vasthouden om te blijven aanvallen**. In level 1 gebruik je tijdens het lopen **Spatie** voor de bestaande aanval. In de Weapon Range Editor beweeg je alleen de cursor, met de pijltjestoetsen.
 
 Loopinvoer en aanvallen hebben aparte timers: aanvallen onderbreekt het lopen niet. De pijlen richten alleen **omhoog, omlaag, links of rechts**. Als je twee aanvalspijlen vasthoudt, wint de laatst ingedrukte; er ontstaat geen diagonale aanval. Laat je die los, dan wordt de andere nog ingedrukte pijl weer gebruikt. Tegengestelde looptoetsen heffen elkaar op. Diagonale stappen krijgen een aangepaste wachttijd zodat diagonaal lopen geen snelheidsbonus geeft; langs een geblokkeerde hoek glijd je over een vrije as.
 
@@ -240,7 +240,7 @@ De wapenmodellen en eigenschappen staan in `ShowroomCatalog.Weapon`; de showroom
 
 | Toets | Actie |
 |---|---|
-| WASD / pijlen + Enter | In menu's: navigeren en bevestigen; kies een van de tien demo's bij Nieuwe game |
+| WASD / pijlen + Enter | In menu's: navigeren en bevestigen; kies een van de elf demo's bij Nieuwe game |
 | `1`–`4` | In Free for All: koop direct een upgrade |
 | `W A S D` | Beweeg omhoog, links, omlaag en rechts, zonder Enter |
 | `E` / `F` / Spatie | In level 1: pakken/openen, wapen wisselen, aanvallen |
@@ -254,11 +254,11 @@ De wapenmodellen en eigenschappen staan in `ShowroomCatalog.Weapon`; de showroom
 | `M` / `Esc` | Hoofdmenu / lobby (buiten de chat) |
 | `Q` / `Ctrl+C` / `Ctrl+D` | Q sluit af tijdens een game; Ctrl+C/D werkt overal |
 
-Alle demo's hebben een achtergrond, muren en bij voldoende ruimte enkele bruine obstakels. Botsingen gebruiken het **hele rechthoekige kader** van de weergave, ook de transparante randen. In de vergelijking bewegen de drie exemplaren tegelijk en gebruiken ze hetzelfde grootste botsingskader. Daardoor blijven posities en obstakels gelijk, terwijl het verschil in hoogte zichtbaar blijft.
+De tien bewegingsdemo's hebben een achtergrond, muren en bij voldoende ruimte enkele bruine obstakels. De Weapon Range Editor heeft een vast raster rond een stilstaande speler. Botsingen in de bewegingsdemo's gebruiken het **hele rechthoekige kader** van de weergave, ook de transparante randen. In de vergelijking bewegen de drie exemplaren tegelijk en gebruiken ze hetzelfde grootste botsingskader. Daardoor blijven posities en obstakels gelijk, terwijl het verschil in hoogte zichtbaar blijft.
 
 De ingebouwde held heeft twee beenposes tijdens beweging. De tekstpoppetjes hebben ook twee poses. Een eigen PNG blijft ongewijzigd; er is geen aanname over waar de benen zitten. De Windows-backend bewaart key-down en key-up afzonderlijk en verwerkt alle ingedrukte WASD-toetsen en één aanvalspijl tegelijk. De overige backends behouden beweging per ontvangen teken.
 
-## De tien demo's
+## De elf demo's
 
 | Menu | Techniek | Wat je ziet |
 |---|---|---|
@@ -272,8 +272,28 @@ De ingebouwde held heeft twee beenposes tijdens beweging. De tekstpoppetjes hebb
 | 8 | `▀` + voor- en achtergrondkleur | Twee verticale bronpixels per terminalcel |
 | 9 | Vergelijking naast elkaar | Dezelfde sprite, achtergrond, invoer en positie met methodes 6–8 |
 | 10 | Pedit5-stijl | Amberkleurig lijnpoppetje met zwaard en schild op zwart, getekend met `▀` |
+| 11 | Weapon Range Editor | Teken met pijlen en Enter een eigen schadegebied op een 11×11 raster rond een vaste speler |
 
 Demo's 4 en 5 gebruiken uitsluitend ASCII-modellen met ANSI-kleuren. Demo's 6–9 vergelijken de pixelrenderers en kunnen een eigen PNG gebruiken: 6 toont voorgrondblokken, 7 achtergrondkleuren en 8 halfblokken. PNG is de invoerbron; de manier van tekenen is daarvan onafhankelijk.
+
+### Weapon Range Editor proberen
+
+Start opnieuw met `.\run.cmd` vanuit de projectmap. Kies **Game aanmaken → 11 / Weapon Range Editor → Aanmaken en naar lobby → Game starten**.
+
+Het poppetje staat vast in het midden van een **11×11 raster** en beslaat **3×3 vakjes**. Eén vakje is dus een derde van de breedte en een derde van de hoogte van de speler. Je kunt schadevakjes aan elke kant kiezen, ook los van elkaar; het gebied hoeft geen rechte lijn of rechthoek te zijn. De negen vakjes van de speler zelf kun je niet als schadevakje selecteren.
+
+| Toets | Actie |
+|---|---|
+| Pijltjestoetsen | Verplaats de gele cursor één vakje; aan de rasterrand stopt hij |
+| Enter | Zet schade op dit vakje aan of uit; geselecteerde vakjes worden rood |
+| Spatie | Toon een korte aanvals-preview op precies de geselecteerde vakjes |
+| C | Wis alle schadevakjes en behoud de cursorpositie |
+| R | Begin opnieuw met een leeg patroon en de cursor rechts naast de speler |
+| Esc / M | Lobby / hoofdmenu |
+
+De cursorcoördinaten zijn relatief aan het midden van de speler: rechts is `+x`, beneden is `+y`. De editor past de weergave automatisch aan de terminal aan: grote vakken hebben ASCII-randen, compacte vakken afwisselende achtergronden. Alle 121 vakjes blijven zichtbaar vanaf een speelveld van **26×19** terminalcellen, ook in de normale menuvenstergrootte van 64×22. Vergroten of verkleinen bewaart het patroon. De linkerzijbalk toont hier patrooninformatie in plaats van HP en upgrades; chat blijft beschikbaar via T/Y.
+
+Dit is een lokale editor en preview. Het patroon wordt in het geheugen bewaard totdat je reset of opnieuw een demo opent; het wijzigt nog geen wapens in Free for All of het Weapon Lab. [`WeaponRangeLab.java`](src/main/java/nl/pinc/terminallab/WeaponRangeLab.java) bewaart het schadegebied als relatieve `Offset(x,y)`-vakjes. `damages(x,y)` bepaalt of een positie in dat gebied ligt, onafhankelijk van het terminalformaat. De pijltjes gebruiken dezelfde tekeninvoer en toetsherhaling als de menu's op Windows, macOS en Linux; de realtime bewegingsbackend verplaatst het personage in deze editor niet.
 
 ### Pedit5-poppetje proberen
 
@@ -372,6 +392,7 @@ Stuur in een multiplayergame logische speltoestand/posities over het netwerk en 
 | `AsciiModel` | Herbruikbare modellen van alleen ASCII-tekstregels |
 | `ShowroomCatalog` | Vijftien monster- en wapenmodellen met eigenschappen voor hergebruik |
 | `Showroom` | Demo's 4 en 5: galerij, camera, inventaris, aanvalsmaskers en onsterfelijke testgolem |
+| `WeaponRangeLab` | Demo 11: schadegebied tekenen in stappen van een derde personage, met rastercursor en preview |
 | `FreeForAll` | Gedeelde lokale FFA-wereld, bots, gevechten, XP, upgrades en respawn |
 | `FreeForAllView` | Camera, HUD, upgrademenu, ranglijst en respawnscherm |
 | `TerminalKeys` | CSI/SS3-pijltjestoetsen en afzonderlijke Escape herkennen |
@@ -386,9 +407,11 @@ mvn '-Dmaven.repo.local=.cache/maven' test
 
 De automatische tests controleren de drie pixelstrategieën, transparantie (ook gedeeltelijk en bij oneven hoogtes), PNG-decoding, afmetingen/aspectratio, ongeldige invoer, clipping, obstakels, schermverschillen zonder wisactie en beweging in alle tien demo's op alle drie formaten. Voor het pedit5-personage controleren ze ook de amberkleur, transparante gaten, stabiele bovenlichaamcontouren en verschillende beenposes. Ze vereisen geen echte terminal. De interactieve Windows-controle moet daarnaast de native invoer en herstelinstellingen toetsen: start de JAR, open het hoofdmenu met een willekeurige toets, maak met WASD/pijlen en Enter een eigen lobby aan en start als host. Beweeg met WASD, probeer de chat met T/Y, kies via het hoofdmenu andere demo's, wissel formaat en sluit af met Q of Ctrl+C.
 
-`GameMenuTest` controleert de vijf homepageacties, gekleurde joinstatuscirkels, alle gamegegevens, blokkeren van volle games, instappen bij In Game zonder host-startopdracht, de route naar alle tien demo's, hostrechten, rolbehoud, agentprofielen, de lege savetoestand, conceptcode, directe upgrades en resizing. `GameDraftTest` controleert bewerken, cursorbeweging, bewaren, resetten en de invoerlimiet. Chatcontroles toetsen kanaalscheiding, wissen en annuleren, de invoerlimiet en het afvangen van bewegings-, menu-, start- en afsluittoetsen.
+`GameMenuTest` controleert de vijf homepageacties, gekleurde joinstatuscirkels, alle gamegegevens, blokkeren van volle games, instappen bij In Game zonder host-startopdracht, de route naar alle elf demo's, hostrechten, rolbehoud, agentprofielen, de lege savetoestand, conceptcode, directe upgrades en resizing. `GameDraftTest` controleert bewerken, cursorbeweging, bewaren, resetten en de invoerlimiet. Chatcontroles toetsen kanaalscheiding, wissen en annuleren, de invoerlimiet en het afvangen van bewegings-, menu-, start- en afsluittoetsen.
 
-`FullscreenTest` controleert opgaande en neergaande logo-animatie, de vaste startprompt, daadwerkelijk gevulde speelvelden in alle tien demo's tot 320×120 cellen, extra zicht bij vergroten, behoud van voortgang bij resizing en de koppeling van leaderboard en upgradebalken met de simulatie.
+`FullscreenTest` controleert opgaande en neergaande logo-animatie, de vaste startprompt, daadwerkelijk gevulde speelvelden in alle elf demo's tot 320×120 cellen, extra zicht bij vergroten, behoud van voortgang bij resizing en de koppeling van leaderboard en upgradebalken met de simulatie.
+
+`WeaponRangeLabTest` controleert selectie en deselectie van alle 112 toegestane schadevakjes, de beschermde 3×3-speler, cursorgrenzen, wissen en resetten, de tijdelijke aanvals-preview, schaal en patroonbehoud bij resizen, menu-integratie, invoer met en zonder de Windows-toetsstatusbackend, chatisolatie en schermupdates zonder wisactie.
 
 `MovementInputTest` controleert alle vier diagonalen, bewegen en aanvallen tegelijk, afzonderlijk loslaten, korte taps, conflicterende toetsen, focusverlies, chat/menu-onderdrukking, hoeken en wall sliding, compensatie van diagonale loopsnelheid en onafhankelijke aanvalscooldowns. Een native ConPTY-controle heeft daarnaast W+D+pijl rechts als gelijktijdig ingedrukt geverifieerd, gevolgd door het stoppen van alle acties na hun key-up-events.
 

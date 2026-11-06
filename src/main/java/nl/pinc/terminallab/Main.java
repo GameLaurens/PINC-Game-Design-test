@@ -10,7 +10,7 @@ public final class Main {
         "Monstershowroom - 15 ASCII-monsters", "Wapenshowroom - oppakken en testen",
         "ANSI - een pixel per voorgrondblok", "ANSI - een pixel per achtergrond",
         "ANSI - twee verticale pixels per teken", "Vergelijk de drie ANSI-methodes",
-        "Pedit5-stijl - amber avonturier met zwaard en schild"
+        "Pedit5-stijl - amber avonturier met zwaard en schild", "Weapon Range Editor - teken je eigen schadegebied"
     };
     private static final int[] SIZES = {8, 16, 32};
     private final Sprite[] examples = new Sprite[3];
@@ -24,6 +24,7 @@ public final class Main {
     private AsciiLevel asciiLevel;
     private FreeForAllView freeForAll;
     private Showroom showroom;
+    private WeaponRangeLab weaponRange;
     private final GameMenu menus = new GameMenu();
     private GameChat chat = new GameChat();
     private GameControls realtimeControls;
@@ -77,6 +78,7 @@ public final class Main {
         System.out.println("Demo 2 FFA: WASD lopen | pijlen aanvallen | 1-4 direct upgraden | U overzicht | Tab ranglijst | Enter respawn");
         System.out.println("Lokale UI-demo: games/chat zijn lokaal, saves zijn nog niet aangesloten, conceptcode wordt niet uitgevoerd.");
         System.out.println("Demo 4: 15 ASCII-monsters | Demo 5: E wapens pakken, F wisselen, pijlen/Spatie aanvallen, V bereik");
+        System.out.println("Demo 11 Weapon Range Editor: pijlen cursor | Enter vakje aan/uit | Spatie test | C wis | R reset");
     }
     private void run() throws IOException {
         try (TerminalSession session = new TerminalSession()) {
@@ -117,19 +119,22 @@ public final class Main {
         Canvas c = MenuStyle.canvas(width, height);
         c.blit(playfield(layout.fieldWidth(), layout.fieldHeight(), now), layout.left(), 0);
         if (layout.left() > 0) {
-            GameHud.draw(c, layout.left(), height, mode == 2 && freeForAll != null ? freeForAll.world() : null,
+            if (mode == 11) weaponRange().sidebar(c, layout.left(), height);
+            else GameHud.draw(c, layout.left(), height, mode == 2 && freeForAll != null ? freeForAll.world() : null,
                 mode == 1 && asciiLevel != null ? 3 - asciiLevel.monstersRemaining() : 0);
             chat.draw(c, width - layout.right(), 0, layout.right(), height);
         } else {
             var p = mode == 2 && freeForAll != null ? freeForAll.world().player() : null;
             String status = p == null ? "HP -- | XP -- | Kills --" : "HP " + p.hp() + "/" + p.maxHp()
                 + " | XP " + p.availableXp() + " | Kills " + p.kills();
-            MenuStyle.text(c, 0, height - 2, width, status, MenuStyle.GREEN);
-            MenuStyle.text(c, 0, height - 1, width, "T/Y chat | Esc lobby | M menu | 1-4 skills", MenuStyle.MUTED);
+            MenuStyle.text(c, 0, height - 2, width, mode == 11 ? "Wapenpatroon / " + weaponRange().damageCells().size() + " schadevakjes" : status, MenuStyle.GREEN);
+            MenuStyle.text(c, 0, height - 1, width, mode == 11 ? "T/Y chat | Esc lobby | M menu"
+                : "T/Y chat | Esc lobby | M menu | 1-4 skills", MenuStyle.MUTED);
         }
         String message = mode == 2 && freeForAll != null ? freeForAll.world().message()
             : mode == 1 && asciiLevel != null ? asciiLevel.message()
             : (mode == 4 || mode == 5) && showroom != null ? showroom.message()
+            : mode == 11 ? weaponRange().message()
             : "WASD bewegen | +/- formaat | B grond | P animatie | R reset";
         String radarLegend = mode == 2 ? "\u25cf monster \u25cb speler | getal=groep" : "\u25cf monster | getal=groep";
         boolean radar = (mode == 1 || mode == 2 || mode == 4 || mode == 5) && layout.fieldWidth() >= 64;
@@ -146,6 +151,7 @@ public final class Main {
     }
     /** Render scenes directly into the central viewport, without the old demo headers or padding. */
     private Canvas playfield(int width, int height, long now) {
+        if (mode == 11) return weaponRange().frame(width, height, now);
         if (mode == 2) {
             if (freeForAll == null) freeForAll = new FreeForAllView(now);
             return freeForAll.arenaFrame(width, height, now, checker, animate);
@@ -201,6 +207,7 @@ public final class Main {
         return custom != null && mode >= 6 ? custom.fit(SIZES[sizeIndex]) : examples[sizeIndex];
     }
     Canvas demo(int width, int height, long now, String stats) {
+        if (mode == 11) return weaponRange().frame(width, height, now);
         if (mode == 1) return asciiLevel(width, height, now, stats);
         if (mode == 2) {
             if (freeForAll == null) freeForAll = new FreeForAllView(now);
@@ -298,10 +305,11 @@ public final class Main {
             return;
         }
         if (chat.handle(input)) return;
-        if (realtimeControls != null && GameControls.continuousKey(input)) return;
+        if (mode != 11 && realtimeControls != null && GameControls.continuousKey(input)) return;
         if (key == 'q') { running = false; return; }
         if (key == 27) { menus.lobby(); return; }
         if (key == 'm') { menus.home(); return; }
+        if (mode == 11) { weaponRange().handle(input, System.nanoTime()); return; }
         if (mode == 2 && freeForAll != null && freeForAll.handle(input, System.nanoTime())) return;
         if ((mode == 4 || mode == 5) && showroom != null && showroom.handle(input, System.nanoTime())) return;
         switch (key) {
@@ -326,7 +334,8 @@ public final class Main {
     }
     void updateControls(long now) {
         if (realtimeControls == null) return;
-        if (menus.screen() != GameMenu.Screen.PLAY || chat.editing()) {
+        // The editor uses the same translated key presses/repeat as menus, on every OS.
+        if (menus.screen() != GameMenu.Screen.PLAY || chat.editing() || mode == 11) {
             realtimeControls.suppressHeld(); nextControlMove = 0; return;
         }
         var held = realtimeControls.state();
@@ -346,15 +355,19 @@ public final class Main {
         }
     }
     void openDemo(int selectedMode) {
-        if (selectedMode < 1 || selectedMode > 10) throw new IllegalArgumentException("Onbekende demo");
+        if (selectedMode < 1 || selectedMode > MODES.length) throw new IllegalArgumentException("Onbekende demo");
         mode = selectedMode; menus.playing(mode); chat = new GameChat();
         if (mode == 10) checker = false;
         reset();
     }
     private void reset() {
         x = 2; y = 2; steps = 0; lastMovement = 0; nextControlMove = 0;
-        world = null; asciiLevel = null; freeForAll = null; showroom = null;
+        world = null; asciiLevel = null; freeForAll = null; showroom = null; weaponRange = null;
         if (realtimeControls != null) realtimeControls.suppressHeld();
+    }
+    private WeaponRangeLab weaponRange() {
+        if (weaponRange == null) weaponRange = new WeaponRangeLab();
+        return weaponRange;
     }
     private void move(int dx, int dy) {
         move(dx, dy, System.nanoTime());

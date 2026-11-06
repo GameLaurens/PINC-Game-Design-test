@@ -16,7 +16,7 @@ final class GameMenu {
     static final String[] GAMES = {"ASCII Adventure", "Free for All",
         "Unicode Playground", "Monster Gallery", "Weapon Lab",
         "Foreground Pixels", "Background Pixels", "Halfblock Pixels",
-        "Renderer Comparison", "Amber Adventure"};
+        "Renderer Comparison", "Amber Adventure", "Weapon Range Editor"};
     private record Player(String name, boolean bot) { }
     private record Room(String name, int game, boolean open, int capacity, GameStatus status, String host, List<Player> players) {
         boolean joinable() { return open && players.size() < capacity; }
@@ -239,7 +239,7 @@ final class GameMenu {
         MenuStyle.text(c, 3, 6, w - 6, "A/D of links/rechts: wijzigen. Enter wisselt ook.", MenuStyle.MUTED);
         int gameRow = 8, modeRow = Math.max(10, h / 2 - 2);
         MenuStyle.choice(c, 2, gameRow, w - 4, "GAME   < " + String.format("%02d", game) + " / " + GAMES[game - 1] + " >", selected == 0);
-        MenuStyle.text(c, 4, gameRow + 1, w - 8, "10 speelbare demo's / originele terminalrenderers", MenuStyle.MUTED);
+        MenuStyle.text(c, 4, gameRow + 1, w - 8, GAMES.length + " speelbare demo's / terminalrenderers en editors", MenuStyle.MUTED);
         MenuStyle.choice(c, 2, modeRow, w - 4, "TOEGANG  < " + (openGame ? "Open" : "Gesloten") + " >", selected == 1);
         if (h > 25) MenuStyle.text(c, 4, modeRow + 2, w - 8, "Lokale UI-demo. De maker wordt host; Free for All heeft vier bots.", MenuStyle.MUTED);
         MenuStyle.choice(c, 2, h - 6, w - 4, "AANMAKEN EN NAAR LOBBY >>", selected == 2);

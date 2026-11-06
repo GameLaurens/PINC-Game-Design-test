@@ -22,7 +22,7 @@ class FullscreenTest {
     }
     @Test void everyDemoFillsTheCentralAreaAtLargeTerminalSizes() throws Exception {
         Main app = new Main(null, "test", 16);
-        for (int mode = 1; mode <= 10; mode++) {
+        for (int mode = 1; mode <= GameMenu.GAMES.length; mode++) {
             app.openDemo(mode);
             for (int[] size : new int[][]{{140, 40}, {240, 80}, {320, 120}}) {
                 Canvas c = app.frame(size[0], size[1], NOW, "");

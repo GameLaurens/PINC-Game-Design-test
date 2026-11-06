@@ -30,7 +30,7 @@ class GameMenuTest {
         return s.toString();
     }
     @Test void anyTitleKeyOnlyDismissesTitleAndEveryDemoCanBeCreatedAndStarted() {
-        for (int mode = 1; mode <= 10; mode++) {
+        for (int mode = 1; mode <= GameMenu.GAMES.length; mode++) {
             GameMenu menu = new GameMenu();
             assertTrue(rows(menu.frame(100, 30)).contains("GLYPH ENGINE"));
             menu.handle('q'); assertEquals(GameMenu.Screen.HOME, menu.screen());
@@ -144,7 +144,7 @@ class GameMenuTest {
         menu.handle('q'); assertTrue(menu.quitRequested());
         menu = new GameMenu(); menu.handle(' '); enter(menu);
         menu.handle('a'); assertEquals(1, menu.game());
-        menu.handle('a'); assertEquals(10, menu.game());
+        menu.handle('a'); assertEquals(GameMenu.GAMES.length, menu.game());
         menu.handle(27); assertEquals(GameMenu.Screen.HOME, menu.screen());
     }
     @Test void agentEditorReturnsToHomeAndRemembersTheChosenProfileWhenReopened() {
