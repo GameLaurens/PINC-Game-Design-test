@@ -67,7 +67,7 @@ mvn package
 java --enable-native-access=ALL-UNNAMED -jar target/terminal-sprite-lab.jar
 ```
 
-De JAR bevat de runtime-dependencies en voorbeeldsprites; op een andere machine is alleen Java 17+ nodig. `--enable-native-access` geeft JLine toestemming zijn native terminalbackend te gebruiken en voorkomt de bijbehorende waarschuwing op recente Java-versies. Er wordt geen software geïnstalleerd door de applicatie.
+De JAR bevat de runtime-dependencies en voorbeeldsprites; op een andere machine is alleen Java 25+ nodig. `--enable-native-access` geeft JLine toestemming zijn native terminalbackend te gebruiken en voorkomt de bijbehorende waarschuwing op recente Java-versies. Er wordt geen software geïnstalleerd door de applicatie.
 
 Gebruik een monospace-lettertype met bloktekens, bijvoorbeeld Cascadia Mono of Consolas. **140 kolommen × 40 rijen** is prettig voor de nieuwe interface; voor de vergelijking met 32×32 en beide zijpanelen is **180×56** aanbevolen. Verklein eventueel de tekst met Ctrl + muiswiel in Windows Terminal. Een te klein venster geeft een melding; `-` kiest een kleinere sprite. De applicatie gebruikt ook grotere terminalvensters volledig.
 

@@ -65,7 +65,7 @@ public final class Main {
         }
     }
     private static void help() {
-        System.out.println("GLYPH ENGINE | Terminal Sprite Lab | Java 17+ | ANSI + UTF-8");
+        System.out.println("GLYPH ENGINE | Terminal Sprite Lab | Java 25+ | ANSI + UTF-8");
         System.out.println("java --enable-native-access=ALL-UNNAMED -jar target/terminal-sprite-lab.jar [--png pad.png] [--size 8|16|32]");
         System.out.println("Startscherm: elke toets | Menu's: WASD/pijlen + Enter | Esc: terug");
         System.out.println("Hoofdmenu: Agent configureren | Lobby: T/Y chat of Chat openen | Enter versturen | Esc annuleren");

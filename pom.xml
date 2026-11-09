@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>nl.pinc</groupId><artifactId>terminal-sprite-lab</artifactId><version>1.0.0</version>
   <properties>
-    <maven.compiler.release>17</maven.compiler.release>
+    <maven.compiler.release>25</maven.compiler.release>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <jline.version>3.30.17</jline.version>
   </properties>
