@@ -12,7 +12,8 @@ public final class Main {
         "ANSI - twee verticale pixels per teken", "Vergelijk de drie ANSI-methodes",
         "Pedit5-stijl - amber avonturier met zwaard en schild", "Weapon Range Editor - teken je eigen schadegebied",
         "Unicode-monstershowroom - 15 monsters in UTF-8",
-        "Open World Explorer - zes biomen en sloopbare objecten"
+        "Open World Explorer - zes biomen en sloopbare objecten",
+        "Small ASCII Gallery - monsters van 1/3 tot 5/3 van de speler"
     };
     private static final int[] SIZES = {8, 16, 32};
     private final Sprite[] examples = new Sprite[3];
@@ -89,6 +90,7 @@ public final class Main {
         System.out.println("Demo 11 Weapon Range Editor: pijlen cursor | Enter vakje aan/uit | Spatie test | C wis | R reset");
         System.out.println("Demo 12 Unicode Monster Gallery: 15 Unicode-monsters | WASD lopen | B grond | P animatie | R reset");
         System.out.println("Demo 13 Open World Explorer: WASD vlot lopen | F sprint | E/Spatie gebruiken en slopen | Tab kaart | 1-6 snelreizen op kaart");
+        System.out.println("Demo 14 Small ASCII Gallery: speler 3x3 | 15 ASCII-monsters van 1x1 t/m 5x5 | WASD lopen | R reset");
     }
     private void run() throws IOException {
         try (TerminalSession session = new TerminalSession()) {
@@ -151,7 +153,7 @@ public final class Main {
             : mode == 13 ? openWorld().message()
             : "WASD bewegen | +/- formaat | B grond | P animatie | R reset";
         String radarLegend = mode == 2 ? "\u25cf monster \u25cb speler | getal=groep" : "\u25cf monster | getal=groep";
-        boolean radar = (mode == 1 || mode == 2 || isShowroom()) && layout.fieldWidth() >= 64;
+        boolean radar = (mode == 1 || mode == 2 || isShowroom() && mode != 14) && layout.fieldWidth() >= 64;
         int messageWidth = layout.fieldWidth() - (radar ? radarLegend.length() + 3 : 0);
         MenuStyle.text(c, layout.left(), layout.fieldHeight(), messageWidth, message, MenuStyle.MUTED);
         if (radar) {
@@ -176,8 +178,7 @@ public final class Main {
             return asciiLevel.arenaFrame(width, height, now, checker, animate);
         }
         if (isShowroom()) {
-            if (showroom == null) showroom = mode == 12 ? Showroom.unicodeMonsters() : new Showroom(mode == 5);
-            return showroom.arenaFrame(width, height, now, checker, animate);
+            return showroom().arenaFrame(width, height, now, checker, animate);
         }
         Canvas c = MenuStyle.canvas(width, height);
         TextArt art = art();
@@ -230,8 +231,7 @@ public final class Main {
             return freeForAll.frame(width, height, now, checker, animate);
         }
         if (isShowroom()) {
-            if (showroom == null) showroom = mode == 12 ? Showroom.unicodeMonsters() : new Showroom(mode == 5);
-            return showroom.frame(width, height, now, checker, animate);
+            return showroom().frame(width, height, now, checker, animate);
         }
         Canvas c = new Canvas(width, height);
         TextArt art = art();
@@ -389,7 +389,15 @@ public final class Main {
         if (weaponRange == null) weaponRange = new WeaponRangeLab();
         return weaponRange;
     }
-    private boolean isShowroom() { return mode == 4 || mode == 5 || mode == 12; }
+    private boolean isShowroom() { return mode == 4 || mode == 5 || mode == 12 || mode == 14; }
+    private Showroom showroom() {
+        if (showroom == null) showroom = switch (mode) {
+            case 12 -> Showroom.unicodeMonsters();
+            case 14 -> Showroom.smallAsciiMonsters();
+            default -> new Showroom(mode == 5);
+        };
+        return showroom;
+    }
     OpenWorld openWorld() {
         if (openWorld == null) openWorld = new OpenWorld();
         return openWorld;

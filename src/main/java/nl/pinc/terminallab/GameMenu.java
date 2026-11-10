@@ -16,7 +16,8 @@ final class GameMenu {
     static final String[] GAMES = {"ASCII Adventure", "Free for All",
         "Unicode Playground", "Monster Gallery", "Weapon Lab",
         "Foreground Pixels", "Background Pixels", "Halfblock Pixels",
-        "Renderer Comparison", "Amber Adventure", "Weapon Range Editor", "Unicode Monster Gallery", "Open World Explorer"};
+        "Renderer Comparison", "Amber Adventure", "Weapon Range Editor", "Unicode Monster Gallery", "Open World Explorer",
+        "Small ASCII Gallery"};
     private record Player(String name, boolean bot) { }
     private record Room(String name, int game, boolean open, int capacity, GameStatus status, String host, List<Player> players) {
         boolean joinable() { return open && players.size() < capacity; }

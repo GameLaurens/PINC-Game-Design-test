@@ -21,6 +21,7 @@ public final class Showroom {
 
     private final boolean weapons;
     private final boolean unicode;
+    private final boolean smallAscii;
     private int worldWidth = WIDTH, worldHeight;
     private final List<Exhibit> exhibits = new ArrayList<>();
     private final List<Weapon> inventory = new ArrayList<>();
@@ -32,27 +33,37 @@ public final class Showroom {
     private String message;
 
     public Showroom(boolean weapons) {
-        this(weapons, false);
+        this(weapons, false, false);
     }
-    public static Showroom unicodeMonsters() { return new Showroom(false, true); }
-    private Showroom(boolean weapons, boolean unicode) {
+    public static Showroom unicodeMonsters() { return new Showroom(false, true, false); }
+    public static Showroom smallAsciiMonsters() { return new Showroom(false, false, true); }
+    private Showroom(boolean weapons, boolean unicode, boolean smallAscii) {
         this.weapons = weapons;
         this.unicode = unicode;
+        this.smallAscii = smallAscii;
+        if (smallAscii) worldWidth = 96;
         worldHeight = unicode ? 82 : weapons ? 58 : 44;
-        int count = unicode ? UnicodeMonsters.CREATURES.size() : 15;
+        int count = smallAscii ? SmallAsciiMonsters.CREATURES.size() : unicode ? UnicodeMonsters.CREATURES.size() : 15;
         for (int i = 0; i < count; i++) exhibits.add(unicode
             ? new Exhibit(i, 8 + (i % 3) * 38, 9 + (i / 3) * 14)
-            : new Exhibit(i, 6 + (i % 5) * 24, 7 + (i / 5) * 12));
+            : new Exhibit(i, 6 + (i % 5) * (smallAscii ? 18 : 24), (smallAscii ? 8 : 7) + (i / 5) * 12));
         message = weapons ? "Loop naar een wapen en druk E. Testmonster: (60,46), onder de rekken."
             : "15 " + (unicode ? "Unicode" : "ASCII") + "-monsters: loop langs de modellen. De camera volgt je.";
     }
     public int height() { return worldHeight; }
+    public int width() { return worldWidth; }
+    public int playerWidth() { return smallAscii ? SmallAsciiMonsters.PLAYER_WIDTH : PLAYER_WIDTH; }
+    public int playerHeight() { return smallAscii ? SmallAsciiMonsters.PLAYER_HEIGHT : PLAYER_HEIGHT; }
     public int playerX() { return x; }
     public int playerY() { return y; }
     public int hits() { return hits; }
     public long totalDamage() { return totalDamage; }
     public int lastDamage() { return lastDamage; }
     public String message() {
+        if (smallAscii) {
+            var monster = SmallAsciiMonsters.CREATURES.get(nearest(false).index);
+            return monster.label() + " " + monster.dimensions() + " | " + monster.scale() + " | Speler 3x3 | WASD lopen";
+        }
         if (!unicode) return message;
         Exhibit e = nearest(false);
         var monster = UnicodeMonsters.CREATURES.get(e.index);
@@ -62,19 +73,21 @@ public final class Showroom {
     public List<Weapon> inventory() { return List.copyOf(inventory); }
     public List<Exhibit> exhibits() { return List.copyOf(exhibits); }
     private TextModel monsterModel(int index) {
+        if (smallAscii) return SmallAsciiMonsters.CREATURES.get(index).model();
         return unicode ? UnicodeMonsters.CREATURES.get(index).model() : Monster.values()[index].model;
     }
-    private String monsterLabel(int index) { return unicode ? UnicodeMonsters.CREATURES.get(index).label() : Monster.values()[index].label; }
-    private String monsterDescription(int index) { return unicode ? UnicodeMonsters.CREATURES.get(index).description() : Monster.values()[index].description; }
-    private int monsterColor(int index) { return unicode ? UnicodeMonsters.CREATURES.get(index).color() : Monster.values()[index].color; }
+    private String monsterLabel(int index) { return smallAscii ? SmallAsciiMonsters.CREATURES.get(index).label() : unicode ? UnicodeMonsters.CREATURES.get(index).label() : Monster.values()[index].label; }
+    private String monsterDescription(int index) { return smallAscii ? SmallAsciiMonsters.CREATURES.get(index).description() : unicode ? UnicodeMonsters.CREATURES.get(index).description() : Monster.values()[index].description; }
+    private int monsterColor(int index) { return smallAscii ? SmallAsciiMonsters.CREATURES.get(index).color() : unicode ? UnicodeMonsters.CREATURES.get(index).color() : Monster.values()[index].color; }
 
     boolean canPlace(int px, int py) {
-        if (px < 1 || py < 1 || px + PLAYER_WIDTH >= worldWidth || py + PLAYER_HEIGHT >= height()) return false;
+        int pw = playerWidth(), ph = playerHeight();
+        if (px < 1 || py < 1 || px + pw >= worldWidth || py + ph >= height()) return false;
         if (weapons) return !new World.Rect(TARGET_X, TARGET_Y, Monster.GOLEM.model.width(), Monster.GOLEM.model.height())
-            .overlaps(px, py, PLAYER_WIDTH, PLAYER_HEIGHT);
+            .overlaps(px, py, pw, ph);
         return exhibits.stream().noneMatch(e -> new World.Rect(e.x, e.y,
             monsterModel(e.index).width(), monsterModel(e.index).height())
-            .overlaps(px, py, PLAYER_WIDTH, PLAYER_HEIGHT));
+            .overlaps(px, py, pw, ph));
     }
     public boolean move(Direction direction, long now) {
         return move(direction.dx, direction.dy, now);
@@ -89,8 +102,8 @@ public final class Showroom {
     }
     private int gap(Exhibit e) {
         TextModel model = weapons ? Weapon.values()[e.index].model : monsterModel(e.index);
-        return Math.max(0, Math.max(e.x - (x + PLAYER_WIDTH), x - (e.x + model.width())))
-            + Math.max(0, Math.max(e.y - (y + PLAYER_HEIGHT), y - (e.y + model.height())));
+        return Math.max(0, Math.max(e.x - (x + playerWidth()), x - (e.x + model.width())))
+            + Math.max(0, Math.max(e.y - (y + playerHeight()), y - (e.y + model.height())));
     }
     private Exhibit nearest(boolean uncollectedOnly) {
         Exhibit best = null;
@@ -169,14 +182,16 @@ public final class Showroom {
     }
     public Camera camera(int width, int height) {
         int w = Math.min(worldWidth, Math.max(1, width)), h = Math.min(height(), Math.max(1, height));
-        return new Camera(Math.max(0, Math.min(worldWidth - w, x + PLAYER_WIDTH / 2 - w / 2)),
-            Math.max(0, Math.min(height() - h, y + PLAYER_HEIGHT / 2 - h / 2)), w, h);
+        return new Camera(Math.max(0, Math.min(worldWidth - w, x + playerWidth() / 2 - w / 2)),
+            Math.max(0, Math.min(height() - h, y + playerHeight() / 2 - h / 2)), w, h);
     }
     public Canvas frame(int width, int height, long now, boolean checker, boolean animate) {
         Canvas canvas = new Canvas(width, height);
         canvas.text(2, 0, weapons ? "5  WAPENSHOWROOM - 15 wapens + onsterfelijke golem"
+            : smallAscii ? "14 SMALL ASCII GALLERY - 15 kleine monsters"
             : unicode ? "12 MONSTERSHOWROOM - 15 Unicode-modellen (UTF-8)" : "4  MONSTERSHOWROOM - 15 ASCII-modellen", 0x71e6bb);
         canvas.text(2, 1, weapons ? "WASD lopen | E pakken | F wisselen | Pijlen aanval"
+            : smallAscii ? "Speler 3x3 | Monsters 1x1 t/m 5x5 | WASD lopen"
             : unicode ? "NOCTILUCA | 15 eigen wezens | WASD ontdek de galerij" : "WASD lopen | Bekijk alle 15 monsters in drie rijen");
         canvas.text(2, 2, weapons ? "Spatie: kijkrichting | V bereik | R reset | M menu | Q stop" : "B grond | P loopanimatie | R reset | M menu | Q stop");
         if (width < 64 || height < 22) {
@@ -185,7 +200,7 @@ public final class Showroom {
             return canvas;
         }
         Camera camera = camera(width - 4, height - 10);
-        canvas.text(2, 3, "Jij " + x + "," + y + " | kaart " + WIDTH + "x" + height()
+        canvas.text(2, 3, "Jij " + x + "," + y + " | kaart " + worldWidth + "x" + height()
             + (weapons ? " | Golem 60,46 (onder de rekken)" : " | Loop ook naar rechts en beneden"), 0x8ca6b4);
         canvas.blit(draw(camera, now, checker, animate), 2, 4);
         Exhibit nearby = nearest(false);
@@ -203,12 +218,13 @@ public final class Showroom {
             canvas.text(2, height - 4, monsterDescription(nearby.index)
                 + (unicode ? "" : " | Model " + model.width() + "x" + model.height() + " cellen"));
             int columns = unicode ? 3 : 5;
-            canvas.text(2, height - 3, unicode ? UnicodeMonsters.CREATURES.get(nearby.index).technique()
+            canvas.text(2, height - 3, smallAscii ? SmallAsciiMonsters.CREATURES.get(nearby.index).scale() + " | Speler 3x3 = 3/3"
+                : unicode ? UnicodeMonsters.CREATURES.get(nearby.index).technique()
                 + " | " + model.width() + "x" + model.height() + " cellen"
                 : "Rij " + (nearby.index / columns + 1) + "/3 | Vak " + (nearby.index % columns + 1)
                 + "/5 | Model op " + nearby.x + "," + nearby.y, 0x8ca6b4);
         }
-        canvas.text(2, height - 2, message, 0xffd180);
+        canvas.text(2, height - 2, smallAscii ? message() : message, 0xffd180);
         if (weapons && gap(nearby) <= 2) {
             Weapon item = Weapon.values()[nearby.index];
             canvas.text(2, height - 1, "Rek: " + item.label + " | " + item.stats() + " | " + item.style(), 0x8ca6b4);
@@ -230,6 +246,10 @@ public final class Showroom {
             scene.text(18, 2, "N O C T I L U C A  /  BESTIARIUM", 0xc5c8e5);
             scene.text(18, 4, "15 wezens uit een wereld tussen droom en schemer", 0x8495a9);
         }
+        if (smallAscii) {
+            scene.text(12, 2, "SMALL ASCII / Speler 3x3 / Monsters 1/3 tot 5/3", 0xc4d6c2);
+            scene.text(12, 4, "Alleen ASCII-tekens; vaste formaten van 1x1 tot 5x5", 0x8ca6b4);
+        }
         if (weapons && weapon() != null && showRange) drawMask(scene, weapon(), facing, x, y, '.', 0x577a7c);
         if (strike != null && now < strike.until) drawMask(scene, strike.weapon, strike.direction, strike.x, strike.y, '*', 0xffd180);
         for (Exhibit e : exhibits) {
@@ -245,6 +265,7 @@ public final class Showroom {
                 model.draw(scene, e.x, e.y, monsterColor(e.index));
                 if (unicode) scene.text(e.x, e.y + model.height() + 1,
                     UnicodeMonsters.CREATURES.get(e.index).technique(), 0x8495a9);
+                if (smallAscii) scene.text(e.x, e.y + 6, model.width() + "x" + model.height() + " / speler 3x3", 0x8ca6b4);
             }
         }
         if (weapons) {
@@ -257,7 +278,7 @@ public final class Showroom {
         boolean walking = animate && now - lastMove < 180_000_000L;
         int pose = walking ? (steps / 2) % 2 : 0;
         if (unicode) (pose == 0 ? UnicodeMonsters.PLAYER : UnicodeMonsters.WALKING_PLAYER).draw(scene, x, y, Canvas.INK);
-        else TextArt.ASCII.draw(scene, x, y + 1, pose);
+        else TextArt.ASCII.draw(scene, x, y + (smallAscii ? 0 : 1), pose);
         if (weapons && weapon() != null) weapon().model.draw(scene, x + 4, y, 0x87d7ed);
         Canvas viewport = new Canvas(camera.width, camera.height);
         for (int row = 0; row < camera.height; row++) for (int col = 0; col < camera.width; col++)
@@ -266,7 +287,7 @@ public final class Showroom {
             ? List.of(new EnemyIndicators.Target(TARGET_X, TARGET_Y, Monster.GOLEM.model.width(), Monster.GOLEM.model.height(), false))
             : exhibits.stream().map(e -> new EnemyIndicators.Target(e.x, e.y,
                 monsterModel(e.index).width(), monsterModel(e.index).height(), false)).toList();
-        EnemyIndicators.draw(viewport, camera.x, camera.y, x + PLAYER_WIDTH / 2, y + PLAYER_HEIGHT / 2, targets);
+        if (!smallAscii) EnemyIndicators.draw(viewport, camera.x, camera.y, x + playerWidth() / 2, y + playerHeight() / 2, targets);
         return viewport;
     }
     Canvas arenaFrame(int width, int height, long now, boolean checker, boolean animate) {
