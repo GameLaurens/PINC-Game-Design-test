@@ -10,7 +10,8 @@ public final class Main {
         "Monstershowroom - 15 ASCII-monsters", "Wapenshowroom - oppakken en testen",
         "ANSI - een pixel per voorgrondblok", "ANSI - een pixel per achtergrond",
         "ANSI - twee verticale pixels per teken", "Vergelijk de drie ANSI-methodes",
-        "Pedit5-stijl - amber avonturier met zwaard en schild", "Weapon Range Editor - teken je eigen schadegebied"
+        "Pedit5-stijl - amber avonturier met zwaard en schild", "Weapon Range Editor - teken je eigen schadegebied",
+        "Unicode-monstershowroom - 15 monsters in UTF-8"
     };
     private static final int[] SIZES = {8, 16, 32};
     private final Sprite[] examples = new Sprite[3];
@@ -79,6 +80,7 @@ public final class Main {
         System.out.println("Lokale UI-demo: games/chat zijn lokaal, saves zijn nog niet aangesloten, conceptcode wordt niet uitgevoerd.");
         System.out.println("Demo 4: 15 ASCII-monsters | Demo 5: E wapens pakken, F wisselen, pijlen/Spatie aanvallen, V bereik");
         System.out.println("Demo 11 Weapon Range Editor: pijlen cursor | Enter vakje aan/uit | Spatie test | C wis | R reset");
+        System.out.println("Demo 12 Unicode Monster Gallery: 15 Unicode-monsters | WASD lopen | B grond | P animatie | R reset");
     }
     private void run() throws IOException {
         try (TerminalSession session = new TerminalSession()) {
@@ -133,11 +135,11 @@ public final class Main {
         }
         String message = mode == 2 && freeForAll != null ? freeForAll.world().message()
             : mode == 1 && asciiLevel != null ? asciiLevel.message()
-            : (mode == 4 || mode == 5) && showroom != null ? showroom.message()
+            : isShowroom() && showroom != null ? showroom.message()
             : mode == 11 ? weaponRange().message()
             : "WASD bewegen | +/- formaat | B grond | P animatie | R reset";
         String radarLegend = mode == 2 ? "\u25cf monster \u25cb speler | getal=groep" : "\u25cf monster | getal=groep";
-        boolean radar = (mode == 1 || mode == 2 || mode == 4 || mode == 5) && layout.fieldWidth() >= 64;
+        boolean radar = (mode == 1 || mode == 2 || isShowroom()) && layout.fieldWidth() >= 64;
         int messageWidth = layout.fieldWidth() - (radar ? radarLegend.length() + 3 : 0);
         MenuStyle.text(c, layout.left(), layout.fieldHeight(), messageWidth, message, MenuStyle.MUTED);
         if (radar) {
@@ -160,8 +162,8 @@ public final class Main {
             if (asciiLevel == null) asciiLevel = new AsciiLevel(Math.max(60, width), Math.max(14, height));
             return asciiLevel.arenaFrame(width, height, now, checker, animate);
         }
-        if (mode == 4 || mode == 5) {
-            if (showroom == null) showroom = new Showroom(mode == 5);
+        if (isShowroom()) {
+            if (showroom == null) showroom = mode == 12 ? Showroom.unicodeMonsters() : new Showroom(mode == 5);
             return showroom.arenaFrame(width, height, now, checker, animate);
         }
         Canvas c = MenuStyle.canvas(width, height);
@@ -213,8 +215,8 @@ public final class Main {
             if (freeForAll == null) freeForAll = new FreeForAllView(now);
             return freeForAll.frame(width, height, now, checker, animate);
         }
-        if (mode == 4 || mode == 5) {
-            if (showroom == null) showroom = new Showroom(mode == 5);
+        if (isShowroom()) {
+            if (showroom == null) showroom = mode == 12 ? Showroom.unicodeMonsters() : new Showroom(mode == 5);
             return showroom.frame(width, height, now, checker, animate);
         }
         Canvas c = new Canvas(width, height);
@@ -311,13 +313,13 @@ public final class Main {
         if (key == 'm') { menus.home(); return; }
         if (mode == 11) { weaponRange().handle(input, System.nanoTime()); return; }
         if (mode == 2 && freeForAll != null && freeForAll.handle(input, System.nanoTime())) return;
-        if ((mode == 4 || mode == 5) && showroom != null && showroom.handle(input, System.nanoTime())) return;
+        if (isShowroom() && showroom != null && showroom.handle(input, System.nanoTime())) return;
         switch (key) {
             case 'e' -> { if (mode == 1 && asciiLevel != null) asciiLevel.interact(); }
             case 'f' -> { if (mode == 1 && asciiLevel != null) asciiLevel.nextWeapon(); }
             case ' ' -> { if (mode == 1 && asciiLevel != null) asciiLevel.attack(System.nanoTime()); }
-            case '+', '=' -> { if (mode != 1 && mode != 2 && mode != 4 && mode != 5) { sizeIndex = Math.min(2, sizeIndex + 1); reset(); } }
-            case '-', '_' -> { if (mode != 1 && mode != 2 && mode != 4 && mode != 5) { sizeIndex = Math.max(0, sizeIndex - 1); reset(); } }
+            case '+', '=' -> { if (mode != 1 && mode != 2 && !isShowroom()) { sizeIndex = Math.min(2, sizeIndex + 1); reset(); } }
+            case '-', '_' -> { if (mode != 1 && mode != 2 && !isShowroom()) { sizeIndex = Math.max(0, sizeIndex - 1); reset(); } }
             case 'b' -> checker = !checker;
             case 'p' -> animate = !animate;
             case 'r' -> reset();
@@ -369,6 +371,7 @@ public final class Main {
         if (weaponRange == null) weaponRange = new WeaponRangeLab();
         return weaponRange;
     }
+    private boolean isShowroom() { return mode == 4 || mode == 5 || mode == 12; }
     private void move(int dx, int dy) {
         move(dx, dy, System.nanoTime());
     }
@@ -381,7 +384,7 @@ public final class Main {
             if (freeForAll != null) freeForAll.world().move(freeForAll.world().player(), dx, dy, now);
             return;
         }
-        if (mode == 4 || mode == 5) {
+        if (isShowroom()) {
             if (showroom != null) showroom.move(dx, dy, now);
             return;
         }

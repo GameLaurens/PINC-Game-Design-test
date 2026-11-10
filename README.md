@@ -1,16 +1,16 @@
 # GLYPH Engine / Terminal Sprite Lab
 
-Een kleine Java-applicatie met **elf werkende terminaldemo's**, inclusief een editor voor wapenschadegebieden. Alles verschijnt in dezelfde terminal: ASCII, Unicode, RGB-blokken en PNG-sprites. Geen Swing/JavaFX-venster, Sixel of Kitty Graphics.
+Een kleine Java-applicatie met **twaalf werkende terminaldemo's**, inclusief een editor voor wapenschadegebieden. Alles verschijnt in dezelfde terminal: ASCII, Unicode, RGB-blokken en PNG-sprites. Geen Swing/JavaFX-venster, Sixel of Kitty Graphics.
 
 ## GLYPH Engine: schermvullende terminalinterface
 
-De engine heeft een eigen groot pixelletterlogo dat op het titelscherm rustig omhoog en omlaag beweegt. De retrovormgeving gebruikt gebroken wit, antraciet en gedempt rood. Dit is een lokaal prototype met elf demo's.
+De engine heeft een eigen groot pixelletterlogo dat op het titelscherm rustig omhoog en omlaag beweegt. De retrovormgeving gebruikt gebroken wit, antraciet en gedempt rood. Dit is een lokaal prototype met twaalf demo's.
 
 Het hoofdmenu en de lobby gebruiken een compacte indeling van maximaal **112 kolommen en 22 rijen**, horizontaal gecentreerd en dicht bij de bovenkant. Knoppen en kamers hebben vaste, kleine tussenruimtes; een groter venster trekt ze niet verder uit elkaar. De lobby groepeert spelers en startacties links, met sessiegegevens en chat rechts. Je configureert je agent in het hoofdmenu. Vanaf 64×22 blijft alles zichtbaar. De overige instelschermen zijn eveneens begrensd, terwijl het speelveld de beschikbare terminalruimte blijft gebruiken.
 
 De homepage heeft vijf acties:
 
-- **Game aanmaken:** kies een van de elf gamemodes/demo's en open of gesloten toegang. Je wordt host van een lokale lobby.
+- **Game aanmaken:** kies een van de twaalf gamemodes/demo's en open of gesloten toegang. Je wordt host van een lokale lobby.
 - **Game save laden:** opent het savescherm. Dit toont een lege toestand: echte voortgang opslaan en hervatten is nog niet aangesloten. De oude voorbeeldsaves die een nieuw spel startten zijn verwijderd.
 - **Deelnemen aan bestaande game:** verplaatst de selectie naar het overzicht van actieve games; selecteer een game en bevestig met Enter. Op smalle terminals heet deze knop **Deelnemen aan game**.
 - **Agent configureren:** kies een gedragsprofiel in de bestaande agentinterface. Het profiel wordt binnen deze sessie onthouden; de voorbeeldcode wordt niet uitgevoerd.
@@ -21,7 +21,7 @@ Bij iedere actieve voorbeeldgame staan een **groene of rode cirkel**, de **gamem
 1. Druk op een willekeurige toets op het titelscherm om het hoofdmenu te openen.
 2. Kies eventueel **Agent configureren** in het hoofdmenu. Selecteer Verkenner, Verdediger of Jager en kies **Opslaan / terug** om terug te keren naar het hoofdmenu. Het profiel blijft tijdens deze programmasessie behouden, ook bij andere games en kamers. De codeweergave blijft een UI-voorbeeld en wordt niet uitgevoerd.
 3. Kies **Game aanmaken** met WASD of de pijlen en bevestig met **Enter**.
-4. Kies een van de **elf games** met **A/D of links/rechts**. Selecteer eronder **Open** of **Gesloten** toegang. Enter wisselt de geselecteerde instelling ook. Kies daarna **Aanmaken en naar lobby**. Hier staan jij en, bij Free for All, de vier lokale bots.
+4. Kies een van de **twaalf games** met **A/D of links/rechts**. Selecteer eronder **Open** of **Gesloten** toegang. Enter wisselt de geselecteerde instelling ook. Kies daarna **Aanmaken en naar lobby**. Hier staan jij en, bij Free for All, de vier lokale bots.
 5. In de lobby kun je via **Chat openen**, **T** (global) of **Y** (team) een bericht typen. **Enter** verstuurt en **Esc** annuleert het typen. Tijdens het typen worden menuacties niet uitgevoerd; versturen kan de game dus niet onbedoeld starten. De lobby toont je agentprofiel alleen ter informatie; aanpassen doe je via het hoofdmenu.
 6. Als maker van de game ben jij de **host**. Kies **Game starten** en druk Enter om direct te beginnen. Alleen de host kan een startopdracht geven; andere spelers kunnen chatten of de lobby verlaten.
 
@@ -39,7 +39,7 @@ De interface benut de beschikbare terminalafmetingen; de oude limiet van 240×10
 
 ## Diagonaal lopen en tegelijk aanvallen
 
-Gebruik een recente **Windows Terminal**, met PowerShell of cmd. Houd **W+A**, **W+D**, **S+A** of **S+D** ingedrukt om diagonaal te lopen. Dit werkt in de tien bewegingsdemo's. Je kunt ondertussen in Free for All en het Weapon Lab een **pijltjestoets vasthouden om te blijven aanvallen**. In level 1 gebruik je tijdens het lopen **Spatie** voor de bestaande aanval. In de Weapon Range Editor beweeg je alleen de cursor, met de pijltjestoetsen.
+Gebruik een recente **Windows Terminal**, met PowerShell of cmd. Houd **W+A**, **W+D**, **S+A** of **S+D** ingedrukt om diagonaal te lopen. Dit werkt in de elf bewegingsdemo's. Je kunt ondertussen in Free for All en het Weapon Lab een **pijltjestoets vasthouden om te blijven aanvallen**. In level 1 gebruik je tijdens het lopen **Spatie** voor de bestaande aanval. In de Weapon Range Editor beweeg je alleen de cursor, met de pijltjestoetsen.
 
 Loopinvoer en aanvallen hebben aparte timers: aanvallen onderbreekt het lopen niet. De pijlen richten alleen **omhoog, omlaag, links of rechts**. Als je twee aanvalspijlen vasthoudt, wint de laatst ingedrukte; er ontstaat geen diagonale aanval. Laat je die los, dan wordt de andere nog ingedrukte pijl weer gebruikt. Tegengestelde looptoetsen heffen elkaar op. Diagonale stappen krijgen een aangepaste wachttijd zodat diagonaal lopen geen snelheidsbonus geeft; langs een geblokkeerde hoek glijd je over een vrije as.
 
@@ -236,11 +236,23 @@ De wapenshowroom begint met **124×58 cellen** en de camera volgt je. Grotere vi
 
 De wapenmodellen en eigenschappen staan in `ShowroomCatalog.Weapon`; de showroom, camera en gevechtslogica in [`Showroom.java`](src/main/java/nl/pinc/terminallab/Showroom.java). Deze wapens worden nog niet aan level 1 of FFA toegevoegd.
 
+## Demo 12: Unicode Monster Gallery (UTF-8)
+
+Start met `.\run.cmd` en kies **Game aanmaken → 12 / Unicode Monster Gallery → Aanmaken en naar lobby → Game starten**. Met **A/D of links/rechts** wissel je de gamekeuze.
+
+**Noctiluca** is een zelfstandig bestiarium met vijftien oorspronkelijke wezens, ontworpen voor Unicode. Je vindt er onder andere de Maanmot, Lantaarneter, Kristalkrab, Droomkwal, Inktorakel, Sterrenrog, Leegteoog en Nachtvorst. De ontwerpen combineren brede silhouetten, open ruimtes, fijne contouren en gekleurde schaduwen. Ogen en lichtkernen hebben een eigen accentkleur. Ook de speler en de buitenrand gebruiken Unicode. UTF-8 is de tekencodering waarmee deze symbolen naar de terminal worden gestuurd.
+
+Loop met **WASD**, ook diagonaal. De camera volgt je door vijf rijen van drie monsters op een kaart van **124×82 cellen**. Alle monsters blijven binnen **12×6 cellen**, tegenover het zichtbare poppetje van **5×5 cellen**: maximaal 2,4 keer zo breed en 1,2 keer zo hoog. Ze zijn op dit compacte formaat ontworpen, met behoud van kleuraccenten en herkenbare silhouetten. Onder ieder wezen staat een ontwerpnotitie, zoals **Halfblokken / spiegeling**, **Negatieve ruimte / licht** of **Facetten / brede houding**. De statusregel beschrijft het dichtstbijzijnde monster. **B** wisselt de achtergrond, **P** de loopanimatie en **R** herstelt de beginpositie. **T/Y** opent chat, **Esc** gaat naar de lobby, **M** naar het hoofdmenu en **Q** sluit af. Monsters staan stil en hebben botsingen; deze showcase bevat geen gevechten.
+
+Gebruik Windows Terminal met bijvoorbeeld **Cascadia Mono** of **Consolas**. Vanaf **80×24** is de galerij bruikbaar; **140×40** toont meer modellen tegelijk. Vergroten en verkleinen bewaren je positie. **+ / -** veranderen deze vaste tekstmodellen niet. De modellen gebruiken tekens van één terminalkolom breed; emoji, dubbele tekens en losse combinatietekens worden geweigerd om het raster uitgelijnd te houden. De precieze vorm blijft afhankelijk van het lettertype.
+
+De onafhankelijke catalogus staat in [`UnicodeMonsters.java`](src/main/java/nl/pinc/terminallab/UnicodeMonsters.java). Ieder `Creature` heeft een eigen naam, beschrijving, ontwerpnotitie, hoofdkleur en model. [`UnicodeModel.java`](src/main/java/nl/pinc/terminallab/UnicodeModel.java) tekent transparante spaties, controleert de tekenbreedte en ondersteunt een kleurenpalet per teken. Zo krijgen `▓` en `▒` donkere tinten, `▄` en `▀` lichte randen en `◆` en `◉` een accentkleur. Verander de tekstregels om het silhouet te ontwerpen en de kleuren bij `creature(...)` om de sfeer te bepalen. De galerij hergebruikt de camera, loopbesturing en botsingen van `Showroom`.
+
 ## Bediening
 
 | Toets | Actie |
 |---|---|
-| WASD / pijlen + Enter | In menu's: navigeren en bevestigen; kies een van de elf demo's bij Nieuwe game |
+| WASD / pijlen + Enter | In menu's: navigeren en bevestigen; kies een van de twaalf demo's bij Nieuwe game |
 | `1`–`4` | In Free for All: koop direct een upgrade |
 | `W A S D` | Beweeg omhoog, links, omlaag en rechts, zonder Enter |
 | `E` / `F` / Spatie | In level 1: pakken/openen, wapen wisselen, aanvallen |
@@ -254,11 +266,11 @@ De wapenmodellen en eigenschappen staan in `ShowroomCatalog.Weapon`; de showroom
 | `M` / `Esc` | Hoofdmenu / lobby (buiten de chat) |
 | `Q` / `Ctrl+C` / `Ctrl+D` | Q sluit af tijdens een game; Ctrl+C/D werkt overal |
 
-De tien bewegingsdemo's hebben een achtergrond, muren en bij voldoende ruimte enkele bruine obstakels. De Weapon Range Editor heeft een vast raster rond een stilstaande speler. Botsingen in de bewegingsdemo's gebruiken het **hele rechthoekige kader** van de weergave, ook de transparante randen. In de vergelijking bewegen de drie exemplaren tegelijk en gebruiken ze hetzelfde grootste botsingskader. Daardoor blijven posities en obstakels gelijk, terwijl het verschil in hoogte zichtbaar blijft.
+De elf bewegingsdemo's hebben een achtergrond, muren en bij voldoende ruimte enkele bruine obstakels. De Weapon Range Editor heeft een vast raster rond een stilstaande speler. Botsingen in de bewegingsdemo's gebruiken het **hele rechthoekige kader** van de weergave, ook de transparante randen. In de vergelijking bewegen de drie exemplaren tegelijk en gebruiken ze hetzelfde grootste botsingskader. Daardoor blijven posities en obstakels gelijk, terwijl het verschil in hoogte zichtbaar blijft.
 
 De ingebouwde held heeft twee beenposes tijdens beweging. De tekstpoppetjes hebben ook twee poses. Een eigen PNG blijft ongewijzigd; er is geen aanname over waar de benen zitten. De Windows-backend bewaart key-down en key-up afzonderlijk en verwerkt alle ingedrukte WASD-toetsen en één aanvalspijl tegelijk. De overige backends behouden beweging per ontvangen teken.
 
-## De elf demo's
+## De twaalf demo's
 
 | Menu | Techniek | Wat je ziet |
 |---|---|---|
@@ -273,6 +285,7 @@ De ingebouwde held heeft twee beenposes tijdens beweging. De tekstpoppetjes hebb
 | 9 | Vergelijking naast elkaar | Dezelfde sprite, achtergrond, invoer en positie met methodes 6–8 |
 | 10 | Pedit5-stijl | Amberkleurig lijnpoppetje met zwaard en schild op zwart, getekend met `▀` |
 | 11 | Weapon Range Editor | Teken met pijlen en Enter een eigen schadegebied op een 11×11 raster rond een vaste speler |
+| 12 | Unicode-monstershowroom (UTF-8) | 15 monsters met blokken en lijntekens in een begaanbare galerij |
 
 Demo's 4 en 5 gebruiken uitsluitend ASCII-modellen met ANSI-kleuren. Demo's 6–9 vergelijken de pixelrenderers en kunnen een eigen PNG gebruiken: 6 toont voorgrondblokken, 7 achtergrondkleuren en 8 halfblokken. PNG is de invoerbron; de manier van tekenen is daarvan onafhankelijk.
 
@@ -390,8 +403,10 @@ Stuur in een multiplayergame logische speltoestand/posities over het netwerk en 
 | `World` | Achtergrond, obstakels en botsingen |
 | `AsciiLevel` | Level 1: monsters, kist, oppakken, uitrusten en aanvallen |
 | `AsciiModel` | Herbruikbare modellen van alleen ASCII-tekstregels |
+| `TextModel` / `UnicodeModel` | Gemeenschappelijke tekstmodelinterface en Unicode-modellen met tekens van één kolom breed |
+| `UnicodeMonsters` | Onafhankelijk Noctiluca-bestiarium: vijftien wezens met kleurenpaletten, ontwerpnotities en twee spelersposes |
 | `ShowroomCatalog` | Vijftien monster- en wapenmodellen met eigenschappen voor hergebruik |
-| `Showroom` | Demo's 4 en 5: galerij, camera, inventaris, aanvalsmaskers en onsterfelijke testgolem |
+| `Showroom` | Demo's 4, 5 en 12: galerijen, camera, inventaris, aanvalsmaskers en onsterfelijke testgolem |
 | `WeaponRangeLab` | Demo 11: schadegebied tekenen in stappen van een derde personage, met rastercursor en preview |
 | `FreeForAll` | Gedeelde lokale FFA-wereld, bots, gevechten, XP, upgrades en respawn |
 | `FreeForAllView` | Camera, HUD, upgrademenu, ranglijst en respawnscherm |
@@ -407,9 +422,9 @@ mvn '-Dmaven.repo.local=.cache/maven' test
 
 De automatische tests controleren de drie pixelstrategieën, transparantie (ook gedeeltelijk en bij oneven hoogtes), PNG-decoding, afmetingen/aspectratio, ongeldige invoer, clipping, obstakels, schermverschillen zonder wisactie en beweging in alle tien demo's op alle drie formaten. Voor het pedit5-personage controleren ze ook de amberkleur, transparante gaten, stabiele bovenlichaamcontouren en verschillende beenposes. Ze vereisen geen echte terminal. De interactieve Windows-controle moet daarnaast de native invoer en herstelinstellingen toetsen: start de JAR, open het hoofdmenu met een willekeurige toets, maak met WASD/pijlen en Enter een eigen lobby aan en start als host. Beweeg met WASD, probeer de chat met T/Y, kies via het hoofdmenu andere demo's, wissel formaat en sluit af met Q of Ctrl+C.
 
-`GameMenuTest` controleert de vijf homepageacties, gekleurde joinstatuscirkels, alle gamegegevens, blokkeren van volle games, instappen bij In Game zonder host-startopdracht, de route naar alle elf demo's, hostrechten, rolbehoud, agentprofielen, de lege savetoestand, conceptcode, directe upgrades en resizing. `GameDraftTest` controleert bewerken, cursorbeweging, bewaren, resetten en de invoerlimiet. Chatcontroles toetsen kanaalscheiding, wissen en annuleren, de invoerlimiet en het afvangen van bewegings-, menu-, start- en afsluittoetsen.
+`GameMenuTest` controleert de vijf homepageacties, gekleurde joinstatuscirkels, alle gamegegevens, blokkeren van volle games, instappen bij In Game zonder host-startopdracht, de route naar alle twaalf demo's, hostrechten, rolbehoud, agentprofielen, de lege savetoestand, conceptcode, directe upgrades en resizing. `GameDraftTest` controleert bewerken, cursorbeweging, bewaren, resetten en de invoerlimiet. Chatcontroles toetsen kanaalscheiding, wissen en annuleren, de invoerlimiet en het afvangen van bewegings-, menu-, start- en afsluittoetsen.
 
-`FullscreenTest` controleert opgaande en neergaande logo-animatie, de vaste startprompt, daadwerkelijk gevulde speelvelden in alle elf demo's tot 320×120 cellen, extra zicht bij vergroten, behoud van voortgang bij resizing en de koppeling van leaderboard en upgradebalken met de simulatie.
+`FullscreenTest` controleert opgaande en neergaande logo-animatie, de vaste startprompt, daadwerkelijk gevulde speelvelden in alle twaalf demo's tot 320×120 cellen, extra zicht bij vergroten, behoud van voortgang bij resizing en de koppeling van leaderboard en upgradebalken met de simulatie.
 
 `WeaponRangeLabTest` controleert selectie en deselectie van alle 112 toegestane schadevakjes, de beschermde 3×3-speler, cursorgrenzen, wissen en resetten, de tijdelijke aanvals-preview, schaal en patroonbehoud bij resizen, menu-integratie, invoer met en zonder de Windows-toetsstatusbackend, chatisolatie en schermupdates zonder wisactie.
 
@@ -420,3 +435,5 @@ De leveltests lopen via echte routes naar wapens, kist en monsters op drie veldf
 De FFA-tests controleren onder meer de 70/30-verdeling inclusief uitgegeven XP, verlies van upgrades, spawnbeveiliging, de effecten van beweging/genezing/schade/HP, richtingsaanvallen en muren, monsterrespawn, behoud van voortgang bij resizing, cameragrenzen en bereikbare routes over de kaart. Een langere simulatie controleert dat bots vechten, upgrades kopen en geldige posities en statistieken behouden. De invoertests dekken zowel CSI- als SS3-pijlen, modifiers en een losse Esc.
 
 De showroomtests lopen echte routes naar alle 15 monsters en wapens, controleren zichtbare uitrusting en inventariswissels, gebruiken ieder wapen herhaaldelijk tegen de golem en toetsen richting, bereikgrenzen, aanvalsvormen, cooldowns, trefferkleur en herstel. Ze controleren ook ASCII-tekens, cameragrenzen, resizing, resetten en het negeren van spriteformaattoetsen.
+
+`UnicodeMonstersTest` controleert de vijftien verschillende Unicode-modellen, kleuren, tekenbreedtes, transparantie, clipping, UTF-8-uitvoer en de verschillenbuffer. De invoercontroles dekken diagonaal lopen, chatisolatie, resizing en resetten in demo 12. De showroomtests controleren ook echte looproutes langs alle Unicode-monsters en hun botsingen. De bestaande menu- en fullscreencontroles nemen demo 12 automatisch mee.

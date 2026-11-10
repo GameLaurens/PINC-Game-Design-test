@@ -3,7 +3,7 @@ package nl.pinc.terminallab;
 import java.util.Arrays;
 
 /** Reusable text sprite: add a model by writing its rows, using printable ASCII only. */
-public final class AsciiModel {
+public final class AsciiModel implements TextModel {
     private final String[] rows;
     private final int width;
     public AsciiModel(String... rows) {

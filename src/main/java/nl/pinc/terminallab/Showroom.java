@@ -5,7 +5,7 @@ import java.util.List;
 import nl.pinc.terminallab.ShowroomCatalog.Monster;
 import nl.pinc.terminallab.ShowroomCatalog.Weapon;
 
-/** Walkable ASCII galleries. The fixed world survives terminal resizing. */
+/** Walkable text galleries. The fixed world survives terminal resizing. */
 public final class Showroom {
     public static final int WIDTH = 124, PLAYER_WIDTH = 10, PLAYER_HEIGHT = 5;
     public static final int TARGET_X = 60, TARGET_Y = 46, HIT_COLOR = 0xff6565;
@@ -20,6 +20,7 @@ public final class Showroom {
     private record Strike(Weapon weapon, Direction direction, int x, int y, long until) { }
 
     private final boolean weapons;
+    private final boolean unicode;
     private int worldWidth = WIDTH, worldHeight;
     private final List<Exhibit> exhibits = new ArrayList<>();
     private final List<Weapon> inventory = new ArrayList<>();
@@ -31,11 +32,19 @@ public final class Showroom {
     private String message;
 
     public Showroom(boolean weapons) {
+        this(weapons, false);
+    }
+    public static Showroom unicodeMonsters() { return new Showroom(false, true); }
+    private Showroom(boolean weapons, boolean unicode) {
         this.weapons = weapons;
-        worldHeight = weapons ? 58 : 44;
-        for (int i = 0; i < 15; i++) exhibits.add(new Exhibit(i, 6 + (i % 5) * 24, 7 + (i / 5) * 12));
+        this.unicode = unicode;
+        worldHeight = unicode ? 82 : weapons ? 58 : 44;
+        int count = unicode ? UnicodeMonsters.CREATURES.size() : 15;
+        for (int i = 0; i < count; i++) exhibits.add(unicode
+            ? new Exhibit(i, 8 + (i % 3) * 38, 9 + (i / 3) * 14)
+            : new Exhibit(i, 6 + (i % 5) * 24, 7 + (i / 5) * 12));
         message = weapons ? "Loop naar een wapen en druk E. Testmonster: (60,46), onder de rekken."
-            : "15 ASCII-monsters: loop langs de modellen. De camera volgt je.";
+            : "15 " + (unicode ? "Unicode" : "ASCII") + "-monsters: loop langs de modellen. De camera volgt je.";
     }
     public int height() { return worldHeight; }
     public int playerX() { return x; }
@@ -43,17 +52,28 @@ public final class Showroom {
     public int hits() { return hits; }
     public long totalDamage() { return totalDamage; }
     public int lastDamage() { return lastDamage; }
-    public String message() { return message; }
+    public String message() {
+        if (!unicode) return message;
+        Exhibit e = nearest(false);
+        var monster = UnicodeMonsters.CREATURES.get(e.index);
+        return (e.index + 1) + "/" + exhibits.size() + " " + monster.label() + " | " + monster.description();
+    }
     public Weapon weapon() { return inventory.isEmpty() ? null : inventory.get(selected); }
     public List<Weapon> inventory() { return List.copyOf(inventory); }
     public List<Exhibit> exhibits() { return List.copyOf(exhibits); }
+    private TextModel monsterModel(int index) {
+        return unicode ? UnicodeMonsters.CREATURES.get(index).model() : Monster.values()[index].model;
+    }
+    private String monsterLabel(int index) { return unicode ? UnicodeMonsters.CREATURES.get(index).label() : Monster.values()[index].label; }
+    private String monsterDescription(int index) { return unicode ? UnicodeMonsters.CREATURES.get(index).description() : Monster.values()[index].description; }
+    private int monsterColor(int index) { return unicode ? UnicodeMonsters.CREATURES.get(index).color() : Monster.values()[index].color; }
 
     boolean canPlace(int px, int py) {
         if (px < 1 || py < 1 || px + PLAYER_WIDTH >= worldWidth || py + PLAYER_HEIGHT >= height()) return false;
         if (weapons) return !new World.Rect(TARGET_X, TARGET_Y, Monster.GOLEM.model.width(), Monster.GOLEM.model.height())
             .overlaps(px, py, PLAYER_WIDTH, PLAYER_HEIGHT);
         return exhibits.stream().noneMatch(e -> new World.Rect(e.x, e.y,
-            Monster.values()[e.index].model.width(), Monster.values()[e.index].model.height())
+            monsterModel(e.index).width(), monsterModel(e.index).height())
             .overlaps(px, py, PLAYER_WIDTH, PLAYER_HEIGHT));
     }
     public boolean move(Direction direction, long now) {
@@ -68,7 +88,7 @@ public final class Showroom {
         return true;
     }
     private int gap(Exhibit e) {
-        AsciiModel model = weapons ? Weapon.values()[e.index].model : Monster.values()[e.index].model;
+        TextModel model = weapons ? Weapon.values()[e.index].model : monsterModel(e.index);
         return Math.max(0, Math.max(e.x - (x + PLAYER_WIDTH), x - (e.x + model.width())))
             + Math.max(0, Math.max(e.y - (y + PLAYER_HEIGHT), y - (e.y + model.height())));
     }
@@ -154,8 +174,10 @@ public final class Showroom {
     }
     public Canvas frame(int width, int height, long now, boolean checker, boolean animate) {
         Canvas canvas = new Canvas(width, height);
-        canvas.text(2, 0, weapons ? "5  WAPENSHOWROOM - 15 wapens + onsterfelijke golem" : "4  MONSTERSHOWROOM - 15 ASCII-modellen", 0x71e6bb);
-        canvas.text(2, 1, weapons ? "WASD lopen | E pakken | F wisselen | Pijlen aanval" : "WASD lopen | Bekijk alle 15 monsters in drie rijen");
+        canvas.text(2, 0, weapons ? "5  WAPENSHOWROOM - 15 wapens + onsterfelijke golem"
+            : unicode ? "12 MONSTERSHOWROOM - 15 Unicode-modellen (UTF-8)" : "4  MONSTERSHOWROOM - 15 ASCII-modellen", 0x71e6bb);
+        canvas.text(2, 1, weapons ? "WASD lopen | E pakken | F wisselen | Pijlen aanval"
+            : unicode ? "NOCTILUCA | 15 eigen wezens | WASD ontdek de galerij" : "WASD lopen | Bekijk alle 15 monsters in drie rijen");
         canvas.text(2, 2, weapons ? "Spatie: kijkrichting | V bereik | R reset | M menu | Q stop" : "B grond | P loopanimatie | R reset | M menu | Q stop");
         if (width < 64 || height < 22) {
             canvas.text(2, 5, "Vergroot de terminal naar minstens 64x22 cellen.");
@@ -176,25 +198,37 @@ public final class Showroom {
             canvas.text(2, height - 3, "Verzameld " + inventory.size() + "/15 | " + (weapon == null ? "Pak een wapen bij een rek."
                 : weapon.style() + " | " + facing.label + " | . bereik, * aanval"), 0x8ca6b4);
         } else {
-            Monster monster = Monster.values()[nearby.index];
-            canvas.text(2, height - 5, "Dichtstbij: " + (nearby.index + 1) + "/15 " + monster.label, monster.color);
-            canvas.text(2, height - 4, monster.description + " | Model " + monster.model.width() + "x" + monster.model.height() + " tekens");
-            canvas.text(2, height - 3, "Rij " + (nearby.index / 5 + 1) + "/3 | Vak " + (nearby.index % 5 + 1)
+            canvas.text(2, height - 5, "Dichtstbij: " + (nearby.index + 1) + "/" + exhibits.size() + " " + monsterLabel(nearby.index), monsterColor(nearby.index));
+            TextModel model = monsterModel(nearby.index);
+            canvas.text(2, height - 4, monsterDescription(nearby.index)
+                + (unicode ? "" : " | Model " + model.width() + "x" + model.height() + " cellen"));
+            int columns = unicode ? 3 : 5;
+            canvas.text(2, height - 3, unicode ? UnicodeMonsters.CREATURES.get(nearby.index).technique()
+                + " | " + model.width() + "x" + model.height() + " cellen"
+                : "Rij " + (nearby.index / columns + 1) + "/3 | Vak " + (nearby.index % columns + 1)
                 + "/5 | Model op " + nearby.x + "," + nearby.y, 0x8ca6b4);
         }
         canvas.text(2, height - 2, message, 0xffd180);
         if (weapons && gap(nearby) <= 2) {
             Weapon item = Weapon.values()[nearby.index];
             canvas.text(2, height - 1, "Rek: " + item.label + " | " + item.stats() + " | " + item.style(), 0x8ca6b4);
-        } else canvas.text(2, height - 1, "Alle modellen en effecten: ASCII-tekst + ANSI-kleuren.", 0x8ca6b4);
+        } else canvas.text(2, height - 1, unicode ? "Unicode-contouren en blokken | UTF-8 + ANSI-kleuren."
+            : "Alle modellen en effecten: ASCII-tekst + ANSI-kleuren.", 0x8ca6b4);
         return canvas;
     }
     public Canvas draw(Camera camera, long now, boolean checker, boolean animate) {
         Canvas scene = new Canvas(worldWidth, height());
         for (int row = 0; row < height(); row++) for (int col = 0; col < worldWidth; col++) {
             boolean edge = col == 0 || row == 0 || col == worldWidth - 1 || row == height() - 1;
-            int ground = checker && (col / 6 + row / 3) % 2 == 0 ? 0x233438 : 0x192a2f;
-            scene.put(col, row, new Cell(edge ? '#' : ' ', edge ? 0x6c898d : ground, ground));
+            boolean alternate = checker && (col / 6 + row / 3) % 2 == 0;
+            int ground = unicode ? (alternate ? 0x17242d : 0x141f28) : (alternate ? 0x233438 : 0x192a2f);
+            char border = !unicode ? '#' : row == 0 ? (col == 0 ? '╭' : col == worldWidth - 1 ? '╮' : '─')
+                : row == height() - 1 ? (col == 0 ? '╰' : col == worldWidth - 1 ? '╯' : '─') : '│';
+            scene.put(col, row, new Cell(edge ? border : ' ', edge ? 0x6c898d : ground, ground));
+        }
+        if (unicode) {
+            scene.text(18, 2, "N O C T I L U C A  /  BESTIARIUM", 0xc5c8e5);
+            scene.text(18, 4, "15 wezens uit een wereld tussen droom en schemer", 0x8495a9);
         }
         if (weapons && weapon() != null && showRange) drawMask(scene, weapon(), facing, x, y, '.', 0x577a7c);
         if (strike != null && now < strike.until) drawMask(scene, strike.weapon, strike.direction, strike.x, strike.y, '*', 0xffd180);
@@ -206,9 +240,11 @@ public final class Showroom {
                 else scene.text(e.x + 2, e.y + 1, "[opgepakt]", 0x577a7c);
                 scene.text(e.x, e.y + 6, weapon.damage + " dmg / " + weapon.range + " bereik", 0xa5b6bb);
             } else {
-                Monster monster = Monster.values()[e.index];
-                scene.text(e.x, e.y - 1, String.format("%02d %s", e.index + 1, monster.label), monster.color);
-                monster.model.draw(scene, e.x, e.y, monster.color);
+                TextModel model = monsterModel(e.index);
+                scene.text(e.x, e.y - (unicode ? 2 : 1), String.format("%02d %s", e.index + 1, monsterLabel(e.index)), monsterColor(e.index));
+                model.draw(scene, e.x, e.y, monsterColor(e.index));
+                if (unicode) scene.text(e.x, e.y + model.height() + 1,
+                    UnicodeMonsters.CREATURES.get(e.index).technique(), 0x8495a9);
             }
         }
         if (weapons) {
@@ -219,7 +255,9 @@ public final class Showroom {
             scene.text(TARGET_X - 1, TARGET_Y + 6, "Totaal: " + totalDamage, 0xffd180);
         }
         boolean walking = animate && now - lastMove < 180_000_000L;
-        TextArt.ASCII.draw(scene, x, y + 1, walking ? (steps / 2) % 2 : 0);
+        int pose = walking ? (steps / 2) % 2 : 0;
+        if (unicode) (pose == 0 ? UnicodeMonsters.PLAYER : UnicodeMonsters.WALKING_PLAYER).draw(scene, x, y, Canvas.INK);
+        else TextArt.ASCII.draw(scene, x, y + 1, pose);
         if (weapons && weapon() != null) weapon().model.draw(scene, x + 4, y, 0x87d7ed);
         Canvas viewport = new Canvas(camera.width, camera.height);
         for (int row = 0; row < camera.height; row++) for (int col = 0; col < camera.width; col++)
@@ -227,7 +265,7 @@ public final class Showroom {
         List<EnemyIndicators.Target> targets = weapons
             ? List.of(new EnemyIndicators.Target(TARGET_X, TARGET_Y, Monster.GOLEM.model.width(), Monster.GOLEM.model.height(), false))
             : exhibits.stream().map(e -> new EnemyIndicators.Target(e.x, e.y,
-                Monster.values()[e.index].model.width(), Monster.values()[e.index].model.height(), false)).toList();
+                monsterModel(e.index).width(), monsterModel(e.index).height(), false)).toList();
         EnemyIndicators.draw(viewport, camera.x, camera.y, x + PLAYER_WIDTH / 2, y + PLAYER_HEIGHT / 2, targets);
         return viewport;
     }

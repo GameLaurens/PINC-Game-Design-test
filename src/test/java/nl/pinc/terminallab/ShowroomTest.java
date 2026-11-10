@@ -36,7 +36,7 @@ class ShowroomTest {
             assertTrue(room.move(direction, 1));
         }
     }
-    private int gap(Point p, Showroom.Exhibit e, AsciiModel model) {
+    private int gap(Point p, Showroom.Exhibit e, TextModel model) {
         return Math.max(0, Math.max(e.x() - p.x - Showroom.PLAYER_WIDTH, p.x - e.x() - model.width()))
             + Math.max(0, Math.max(e.y() - p.y - Showroom.PLAYER_HEIGHT, p.y - e.y() - model.height()));
     }
@@ -68,6 +68,16 @@ class ShowroomTest {
             assertTrue(models.add(model.toString()), "Ieder monster heeft een eigen silhouet");
         }
         assertAscii(full);
+    }
+    @Test void unicodeMonstersAreReachableAndTheirFullModelsBlockMovement() {
+        Showroom room = Showroom.unicodeMonsters();
+        for (var e : room.exhibits()) {
+            var creature = UnicodeMonsters.CREATURES.get(e.index());
+            var model = creature.model();
+            walkTo(room, p -> gap(p, e, model) == 0);
+            assertFalse(room.canPlace(e.x(), e.y()));
+            assertTrue(room.message().contains(creature.label()));
+        }
     }
     @Test void allWeaponsCanBeCollectedEquippedAndUsedRepeatedlyAgainstImmortalGolem() {
         Showroom room = new Showroom(true);
