@@ -1,15 +1,12 @@
 @echo off
 setlocal
 pushd "%~dp0"
-rem A previous build may predate source/resource changes or a git pull.
-rem Inline -Command works with the default PowerShell execution policy too.
-powershell.exe -NoProfile -Command "$jar = Get-Item -LiteralPath 'target/terminal-sprite-lab.jar' -ErrorAction SilentlyContinue; if ($null -eq $jar) { exit 1 }; $inputs = @(Get-Item -LiteralPath 'pom.xml') + @(Get-ChildItem -LiteralPath 'src' -Recurse -File); if (@($inputs | Where-Object { $_.LastWriteTimeUtc -gt $jar.LastWriteTimeUtc }).Count -gt 0) { exit 1 }; exit 0"
-if errorlevel 1 (
-    echo Bronbestanden gewijzigd of nog geen build gevonden. Applicatie wordt gebouwd...
-    call mvn -B "-Dmaven.repo.local=%~dp0.cache\maven" package
-    if errorlevel 1 goto :failed
-)
-java --enable-native-access=ALL-UNNAMED -jar "target\terminal-sprite-lab.jar" %*
+rem Validate the packaged demos and freeze this session's archive before launching.
+rem Inline -Command also works when running .ps1 files is blocked by execution policy.
+powershell.exe -NoProfile -Command "try { & ([scriptblock]::Create([IO.File]::ReadAllText('tools/prepare-run.ps1'))) } catch { Write-Error $_; exit 1 }"
+if errorlevel 1 goto :failed
+set /p "labJar="<".cache\current-run.txt"
+java --enable-native-access=ALL-UNNAMED -jar "%labJar%" %*
 set "labExit=%errorlevel%"
 popd
 exit /b %labExit%

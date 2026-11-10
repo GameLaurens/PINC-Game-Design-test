@@ -11,7 +11,8 @@ public final class Main {
         "ANSI - een pixel per voorgrondblok", "ANSI - een pixel per achtergrond",
         "ANSI - twee verticale pixels per teken", "Vergelijk de drie ANSI-methodes",
         "Pedit5-stijl - amber avonturier met zwaard en schild", "Weapon Range Editor - teken je eigen schadegebied",
-        "Unicode-monstershowroom - 15 monsters in UTF-8"
+        "Unicode-monstershowroom - 15 monsters in UTF-8",
+        "Open World Explorer - zes biomen en sloopbare objecten"
     };
     private static final int[] SIZES = {8, 16, 32};
     private final Sprite[] examples = new Sprite[3];
@@ -26,6 +27,7 @@ public final class Main {
     private FreeForAllView freeForAll;
     private Showroom showroom;
     private WeaponRangeLab weaponRange;
+    private OpenWorld openWorld;
     private final GameMenu menus = new GameMenu();
     private GameChat chat = new GameChat();
     private GameControls realtimeControls;
@@ -45,6 +47,10 @@ public final class Main {
             for (int i = 0; i < args.length; i++) {
                 switch (args[i]) {
                     case "--help", "-h" -> { help(); return; }
+                    case "--check-build" -> {
+                        System.out.println("Buildcontrole geslaagd: " + BuildCheck.verify() + " demo's, inclusief Monster Gallery 4.");
+                        return;
+                    }
                     case "--png" -> {
                         if (++i == args.length) throw new IllegalArgumentException("Pad na --png ontbreekt.");
                         path = Path.of(args[i]);
@@ -68,6 +74,7 @@ public final class Main {
     private static void help() {
         System.out.println("GLYPH ENGINE | Terminal Sprite Lab | Java 25+ | ANSI + UTF-8");
         System.out.println("java --enable-native-access=ALL-UNNAMED -jar target/terminal-sprite-lab.jar [--png pad.png] [--size 8|16|32]");
+        System.out.println("--check-build: controleer alle demo's zonder een interactieve terminal te openen");
         System.out.println("Startscherm: elke toets | Menu's: WASD/pijlen + Enter | Esc: terug");
         System.out.println("Hoofdmenu: Agent configureren | Lobby: T/Y chat of Chat openen | Enter versturen | Esc annuleren");
         System.out.println("Homepage: Game aanmaken | Game save laden | Deelnemen | Agent configureren | Zelf game maken");
@@ -81,6 +88,7 @@ public final class Main {
         System.out.println("Demo 4: 15 ASCII-monsters | Demo 5: E wapens pakken, F wisselen, pijlen/Spatie aanvallen, V bereik");
         System.out.println("Demo 11 Weapon Range Editor: pijlen cursor | Enter vakje aan/uit | Spatie test | C wis | R reset");
         System.out.println("Demo 12 Unicode Monster Gallery: 15 Unicode-monsters | WASD lopen | B grond | P animatie | R reset");
+        System.out.println("Demo 13 Open World Explorer: WASD vlot lopen | F sprint | E/Spatie gebruiken en slopen | Tab kaart | 1-6 snelreizen op kaart");
     }
     private void run() throws IOException {
         try (TerminalSession session = new TerminalSession()) {
@@ -122,6 +130,7 @@ public final class Main {
         c.blit(playfield(layout.fieldWidth(), layout.fieldHeight(), now), layout.left(), 0);
         if (layout.left() > 0) {
             if (mode == 11) weaponRange().sidebar(c, layout.left(), height);
+            else if (mode == 13) openWorld().sidebar(c, layout.left(), height);
             else GameHud.draw(c, layout.left(), height, mode == 2 && freeForAll != null ? freeForAll.world() : null,
                 mode == 1 && asciiLevel != null ? 3 - asciiLevel.monstersRemaining() : 0);
             chat.draw(c, width - layout.right(), 0, layout.right(), height);
@@ -129,14 +138,17 @@ public final class Main {
             var p = mode == 2 && freeForAll != null ? freeForAll.world().player() : null;
             String status = p == null ? "HP -- | XP -- | Kills --" : "HP " + p.hp() + "/" + p.maxHp()
                 + " | XP " + p.availableXp() + " | Kills " + p.kills();
+            if (mode == 13) status = openWorld().biome().label + " | Biomen " + openWorld().visited().size() + "/6 | Relikwie " + openWorld().treasures() + "/6";
             MenuStyle.text(c, 0, height - 2, width, mode == 11 ? "Wapenpatroon / " + weaponRange().damageCells().size() + " schadevakjes" : status, MenuStyle.GREEN);
-            MenuStyle.text(c, 0, height - 1, width, mode == 11 ? "T/Y chat | Esc lobby | M menu"
+            MenuStyle.text(c, 0, height - 1, width, mode == 13 ? "WASD | F sprint | E slopen | Tab kaart | T/Y chat"
+                : mode == 11 ? "T/Y chat | Esc lobby | M menu"
                 : "T/Y chat | Esc lobby | M menu | 1-4 skills", MenuStyle.MUTED);
         }
         String message = mode == 2 && freeForAll != null ? freeForAll.world().message()
             : mode == 1 && asciiLevel != null ? asciiLevel.message()
             : isShowroom() && showroom != null ? showroom.message()
             : mode == 11 ? weaponRange().message()
+            : mode == 13 ? openWorld().message()
             : "WASD bewegen | +/- formaat | B grond | P animatie | R reset";
         String radarLegend = mode == 2 ? "\u25cf monster \u25cb speler | getal=groep" : "\u25cf monster | getal=groep";
         boolean radar = (mode == 1 || mode == 2 || isShowroom()) && layout.fieldWidth() >= 64;
@@ -153,6 +165,7 @@ public final class Main {
     }
     /** Render scenes directly into the central viewport, without the old demo headers or padding. */
     private Canvas playfield(int width, int height, long now) {
+        if (mode == 13) return openWorld().frame(width, height, now, checker, animate);
         if (mode == 11) return weaponRange().frame(width, height, now);
         if (mode == 2) {
             if (freeForAll == null) freeForAll = new FreeForAllView(now);
@@ -209,6 +222,7 @@ public final class Main {
         return custom != null && mode >= 6 ? custom.fit(SIZES[sizeIndex]) : examples[sizeIndex];
     }
     Canvas demo(int width, int height, long now, String stats) {
+        if (mode == 13) return openWorld().frame(width, height, now, checker, animate);
         if (mode == 11) return weaponRange().frame(width, height, now);
         if (mode == 1) return asciiLevel(width, height, now, stats);
         if (mode == 2) {
@@ -288,9 +302,11 @@ public final class Main {
     }
     void handle(int input) {
         boolean wasChat = chat.editing();
+        boolean wasMap = mode == 13 && openWorld != null && openWorld.mapOpen();
         try { handleKey(input); }
         finally {
-            if (realtimeControls != null && (wasChat || chat.editing() || menus.screen() != GameMenu.Screen.PLAY)) {
+            if (realtimeControls != null && (wasChat || chat.editing() || wasMap
+                || mode == 13 && openWorld != null && openWorld.mapOpen() || menus.screen() != GameMenu.Screen.PLAY)) {
                 realtimeControls.suppressHeld(); nextControlMove = 0;
             }
         }
@@ -312,14 +328,15 @@ public final class Main {
         if (key == 27) { menus.lobby(); return; }
         if (key == 'm') { menus.home(); return; }
         if (mode == 11) { weaponRange().handle(input, System.nanoTime()); return; }
+        if (mode == 13 && openWorld().handle(input, System.nanoTime())) return;
         if (mode == 2 && freeForAll != null && freeForAll.handle(input, System.nanoTime())) return;
         if (isShowroom() && showroom != null && showroom.handle(input, System.nanoTime())) return;
         switch (key) {
             case 'e' -> { if (mode == 1 && asciiLevel != null) asciiLevel.interact(); }
             case 'f' -> { if (mode == 1 && asciiLevel != null) asciiLevel.nextWeapon(); }
             case ' ' -> { if (mode == 1 && asciiLevel != null) asciiLevel.attack(System.nanoTime()); }
-            case '+', '=' -> { if (mode != 1 && mode != 2 && !isShowroom()) { sizeIndex = Math.min(2, sizeIndex + 1); reset(); } }
-            case '-', '_' -> { if (mode != 1 && mode != 2 && !isShowroom()) { sizeIndex = Math.max(0, sizeIndex - 1); reset(); } }
+            case '+', '=' -> { if (mode != 1 && mode != 2 && mode != 13 && !isShowroom()) { sizeIndex = Math.min(2, sizeIndex + 1); reset(); } }
+            case '-', '_' -> { if (mode != 1 && mode != 2 && mode != 13 && !isShowroom()) { sizeIndex = Math.max(0, sizeIndex - 1); reset(); } }
             case 'b' -> checker = !checker;
             case 'p' -> animate = !animate;
             case 'r' -> reset();
@@ -337,12 +354,12 @@ public final class Main {
     void updateControls(long now) {
         if (realtimeControls == null) return;
         // The editor uses the same translated key presses/repeat as menus, on every OS.
-        if (menus.screen() != GameMenu.Screen.PLAY || chat.editing() || mode == 11) {
+        if (menus.screen() != GameMenu.Screen.PLAY || chat.editing() || mode == 11 || mode == 13 && openWorld().mapOpen()) {
             realtimeControls.suppressHeld(); nextControlMove = 0; return;
         }
         var held = realtimeControls.state();
         if (held.dx() != 0 || held.dy() != 0) {
-            if (mode == 2 || now >= nextControlMove) {
+            if (mode == 2 || mode == 13 || now >= nextControlMove) {
                 move(held.dx(), held.dy(), now);
                 nextControlMove = now + Movement.delay(140_000_000L, held.dx(), held.dy());
             }
@@ -354,6 +371,7 @@ public final class Main {
         } else if (held.space()) {
             if (mode == 1 && asciiLevel != null) asciiLevel.attack(now);
             else if (mode == 5 && showroom != null) showroom.handle(' ', now);
+            else if (mode == 13) openWorld().interact(now);
         }
     }
     void openDemo(int selectedMode) {
@@ -364,7 +382,7 @@ public final class Main {
     }
     private void reset() {
         x = 2; y = 2; steps = 0; lastMovement = 0; nextControlMove = 0;
-        world = null; asciiLevel = null; freeForAll = null; showroom = null; weaponRange = null;
+        world = null; asciiLevel = null; freeForAll = null; showroom = null; weaponRange = null; openWorld = null;
         if (realtimeControls != null) realtimeControls.suppressHeld();
     }
     private WeaponRangeLab weaponRange() {
@@ -372,10 +390,15 @@ public final class Main {
         return weaponRange;
     }
     private boolean isShowroom() { return mode == 4 || mode == 5 || mode == 12; }
+    OpenWorld openWorld() {
+        if (openWorld == null) openWorld = new OpenWorld();
+        return openWorld;
+    }
     private void move(int dx, int dy) {
         move(dx, dy, System.nanoTime());
     }
     private void move(int dx, int dy, long now) {
+        if (mode == 13) { openWorld().move(dx, dy, now); return; }
         if (mode == 1) {
             if (asciiLevel != null) asciiLevel.move(dx, dy, now);
             return;
