@@ -327,7 +327,7 @@ De ingebouwde held heeft twee beenposes tijdens beweging. De tekstpoppetjes hebb
 | 8 | `▀` + voor- en achtergrondkleur | Twee verticale bronpixels per terminalcel |
 | 9 | Vergelijking naast elkaar | Dezelfde sprite, achtergrond, invoer en positie met methodes 6–8 |
 | 10 | Pedit5-stijl | Amberkleurig lijnpoppetje met zwaard en schild op zwart, getekend met `▀` |
-| 11 | Weapon Range Editor | Teken met pijlen en Enter een eigen schadegebied op een 11×11 raster rond een vaste speler |
+| 11 | Weapon Range Editor | Teken met pijlen en Enter een eigen schadegebied op een 31×31 raster rond een vaste speler |
 | 12 | Unicode-monstershowroom (UTF-8) | 15 monsters met blokken en lijntekens in een begaanbare galerij |
 | 13 | Open World Explorer | Grote wereld met zes biomen, sloopbare versperringen, ruïnekisten, sprint en kaart met snelreizen |
 | 14 | Small ASCII Gallery | 15 kleine ASCII-monsters van 1x1 t/m 5x5, naast een zichtbare speler van 3x3 |
@@ -338,18 +338,18 @@ Demo's 4, 5 en 14 gebruiken uitsluitend ASCII-modellen met ANSI-kleuren. Demo's 
 
 Start opnieuw met `.\run.cmd` vanuit de projectmap. Kies **Game aanmaken → 11 / Weapon Range Editor → Aanmaken en naar lobby → Game starten**.
 
-Het poppetje staat vast in het midden van een **11×11 raster** en beslaat **3×3 vakjes**. Eén vakje is dus een derde van de breedte en een derde van de hoogte van de speler. Je kunt schadevakjes aan elke kant kiezen, ook los van elkaar; het gebied hoeft geen rechte lijn of rechthoek te zijn. De negen vakjes van de speler zelf kun je niet als schadevakje selecteren.
+Het poppetje staat vast in het midden van een **31×31 raster** en beslaat **3×3 vakjes**. Je kunt dus tot **15 vakjes** (vijf spelerbreedtes) in elke richting schade kiezen. Eén vakje is dus een derde van de breedte en een derde van de hoogte van de speler. Je kunt schadevakjes aan elke kant kiezen, ook los van elkaar; het gebied hoeft geen rechte lijn of rechthoek te zijn. De negen vakjes van de speler zelf kun je niet als schadevakje selecteren.
 
 | Toets | Actie |
 |---|---|
-| Pijltjestoetsen | Verplaats de gele cursor één vakje; aan de rasterrand stopt hij |
+| Pijltjestoetsen | Verplaats de gele cursor één vakje; het zicht schuift mee en aan de rasterrand stopt hij |
 | Enter | Zet schade op dit vakje aan of uit; geselecteerde vakjes worden rood |
 | Spatie | Toon een korte aanvals-preview op precies de geselecteerde vakjes |
 | C | Wis alle schadevakjes en behoud de cursorpositie |
 | R | Begin opnieuw met een leeg patroon en de cursor rechts naast de speler |
 | Esc / M | Lobby / hoofdmenu |
 
-De cursorcoördinaten zijn relatief aan het midden van de speler: rechts is `+x`, beneden is `+y`. De editor past de weergave automatisch aan de terminal aan: grote vakken hebben ASCII-randen, compacte vakken afwisselende achtergronden. Alle 121 vakjes blijven zichtbaar vanaf een speelveld van **26×19** terminalcellen, ook in de normale menuvenstergrootte van 64×22. Vergroten of verkleinen bewaart het patroon. De linkerzijbalk toont hier patrooninformatie in plaats van HP en upgrades; chat blijft beschikbaar via T/Y.
+De cursorcoördinaten zijn relatief aan het midden van de speler: rechts is `+x`, beneden is `+y`. De editor past de weergave automatisch aan de terminal aan: grote vakken hebben ASCII-randen, compacte vakken afwisselende achtergronden. Past het hele raster niet, dan toont de editor een uitsnede die de cursor volgt; gele pijlen `< > ^ v` op de rand geven aan dat het raster verder loopt en de statusregel toont het zichtbare bereik (`Zicht x..` `y..`). Het volledige raster van 961 vakjes past vanaf ongeveer 64×36 speelveldcellen; met ASCII-randen vanaf 127×71. De editor werkt vanaf een speelveld van **26×19** terminalcellen, ook in de normale menuvenstergrootte van 64×22. Vergroten of verkleinen bewaart het patroon. De linkerzijbalk toont hier patrooninformatie in plaats van HP en upgrades; chat blijft beschikbaar via T/Y.
 
 Dit is een lokale editor en preview. Het patroon wordt in het geheugen bewaard totdat je reset of opnieuw een demo opent; het wijzigt nog geen wapens in Free for All of het Weapon Lab. [`WeaponRangeLab.java`](src/main/java/nl/pinc/terminallab/WeaponRangeLab.java) bewaart het schadegebied als relatieve `Offset(x,y)`-vakjes. `damages(x,y)` bepaalt of een positie in dat gebied ligt, onafhankelijk van het terminalformaat. De pijltjes gebruiken dezelfde tekeninvoer en toetsherhaling als de menu's op Windows, macOS en Linux; de realtime bewegingsbackend verplaatst het personage in deze editor niet.
 
@@ -474,7 +474,7 @@ De automatische tests controleren de drie pixelstrategieën, transparantie (ook 
 
 `FullscreenTest` controleert opgaande en neergaande logo-animatie, de vaste startprompt, daadwerkelijk gevulde speelvelden in alle veertien demo's tot 320×120 cellen, extra zicht bij vergroten, behoud van voortgang bij resizing en de koppeling van leaderboard en upgradebalken met de simulatie.
 
-`WeaponRangeLabTest` controleert selectie en deselectie van alle 112 toegestane schadevakjes, de beschermde 3×3-speler, cursorgrenzen, wissen en resetten, de tijdelijke aanvals-preview, schaal en patroonbehoud bij resizen, menu-integratie, invoer met en zonder de Windows-toetsstatusbackend, chatisolatie en schermupdates zonder wisactie.
+`WeaponRangeLabTest` controleert selectie en deselectie van alle 952 toegestane schadevakjes op het 31×31 raster, het meeschuivende zicht, de beschermde 3×3-speler, cursorgrenzen, wissen en resetten, de tijdelijke aanvals-preview, schaal en patroonbehoud bij resizen, menu-integratie, invoer met en zonder de Windows-toetsstatusbackend, chatisolatie en schermupdates zonder wisactie.
 
 `MovementInputTest` controleert alle vier diagonalen, bewegen en aanvallen tegelijk, afzonderlijk loslaten, korte taps, conflicterende toetsen, focusverlies, chat/menu-onderdrukking, hoeken en wall sliding, compensatie van diagonale loopsnelheid en onafhankelijke aanvalscooldowns. Een native ConPTY-controle heeft daarnaast W+D+pijl rechts als gelijktijdig ingedrukt geverifieerd, gevolgd door het stoppen van alle acties na hun key-up-events.
 

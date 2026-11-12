@@ -35,17 +35,19 @@ class WeaponRangeLabTest {
     }
     @Test void allSurroundingCellsCanBeSelectedButTheThreeByThreeBodyIsProtected() {
         WeaponRangeLab lab = new WeaponRangeLab();
-        for (int y = -5; y <= 5; y++) for (int x = -5; x <= 5; x++) {
+        int r = WeaponRangeLab.RADIUS, all = WeaponRangeLab.SIZE * WeaponRangeLab.SIZE - 9;
+        assertEquals(15, r);
+        for (int y = -r; y <= r; y++) for (int x = -r; x <= r; x++) {
             cursor(lab, x, y); lab.handle('\r', NOW);
             assertEquals(Math.abs(x) > 1 || Math.abs(y) > 1, lab.damages(x, y));
         }
-        assertEquals(112, lab.damageCells().size());
+        assertEquals(all, lab.damageCells().size());
         for (int key : new int[]{TerminalKeys.LEFT, TerminalKeys.RIGHT, TerminalKeys.UP, TerminalKeys.DOWN}) {
-            for (int i = 0; i < 30; i++) lab.handle(key, NOW);
-            assertTrue(Math.abs(lab.cursorX()) <= 5 && Math.abs(lab.cursorY()) <= 5);
+            for (int i = 0; i < 60; i++) lab.handle(key, NOW);
+            assertTrue(Math.abs(lab.cursorX()) <= r && Math.abs(lab.cursorY()) <= r);
         }
         var copy = new HashSet<>(lab.damageCells()); copy.clear();
-        assertEquals(112, lab.damageCells().size());
+        assertEquals(all, lab.damageCells().size());
     }
     @Test void clearAndResetDoNotConfuseTheCursorWithDamageSelection() {
         WeaponRangeLab lab = new WeaponRangeLab();
@@ -67,18 +69,31 @@ class WeaponRangeLabTest {
         assertEquals(WeaponRangeLab.DAMAGE, lab.frame(100, 39, NOW + 400_000_000L).get(grid.x(2), grid.y(0)).background());
         assertEquals(1, lab.damageCells().size());
     }
-    @Test void compactAndRoomyGridsKeepAllCellsVisibleAndPreserveTheSameOneThirdScale() {
-        WeaponRangeLab lab = new WeaponRangeLab(); cursor(lab, -5, -5); lab.handle('\r', NOW);
-        for (int[] size : new int[][]{{52, 23}, {64, 19}, {100, 39}, {220, 80}}) {
+    @Test void compactAndRoomyGridsShowTheCursorAndPreserveTheSameOneThirdScale() {
+        int[][] sizes = {{52, 23}, {64, 19}, {100, 39}, {220, 80}};
+        WeaponRangeLab lab = new WeaponRangeLab();
+        for (int[] size : sizes) {
             var grid = lab.grid(size[0], size[1]); Canvas c = lab.frame(size[0], size[1], NOW);
-            assertTrue(c.contains(grid.x(-5), grid.y(-5))); assertTrue(c.contains(grid.x(5), grid.y(5)));
-            assertTrue(grid.y(5) < size[1] - 3, "Het raster mag de bediening niet overlappen");
-            assertEquals(WeaponRangeLab.DAMAGE, c.get(grid.x(-5), grid.y(-5)).background());
+            assertTrue(grid.visible(0, 0), "Het raster begint rond de speler");
             assertEquals('O', c.get(grid.x(0) + (grid.roomy() ? 1 : 0), grid.y(-1)).glyph());
             assertEquals(3 * grid.cellWidth(), grid.x(2) - grid.x(-1));
             assertEquals(3 * grid.cellHeight(), grid.y(2) - grid.y(-1));
+        }
+        cursor(lab, -15, -15); lab.handle('\r', NOW);
+        for (int[] size : sizes) {
+            var grid = lab.grid(size[0], size[1]); Canvas c = lab.frame(size[0], size[1], NOW);
+            assertTrue(grid.visible(-15, -15), "Het zicht volgt de cursor");
+            assertTrue(c.contains(grid.x(grid.lastX()), grid.y(grid.lastY())));
+            assertTrue(grid.y(grid.lastY()) < size[1] - 3, "Het raster mag de bediening niet overlappen");
+            assertEquals(WeaponRangeLab.DAMAGE, c.get(grid.x(-15), grid.y(-15)).background());
             assertEquals(1, lab.damageCells().size());
         }
+        var full = lab.grid(220, 80);
+        assertTrue(full.complete() && full.roomy() && full.visible(15, 15));
+        cursor(lab, 15, 15);
+        var small = lab.grid(52, 23);
+        assertTrue(small.visible(15, 15)); assertFalse(small.complete());
+        assertTrue(rows(lab.frame(52, 23, NOW)).contains("Zicht"));
         assertTrue(rows(lab.frame(1, 1, NOW)).length() > 0);
         assertTrue(rows(lab.frame(30, 12, NOW)).contains("Vergroot"));
     }
